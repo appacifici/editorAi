@@ -13,4 +13,14 @@ interface ChatMessage {
     content: string;
 }
 
-export {ChatMessage,ChatMessageArray};
+interface PromptAICallInterface {
+    key: string;
+    saveTo: string;
+    saveKey: string;
+    complete: number;
+}
+
+type PromptAiCallsInterface  = PromptAICallInterface[];
+
+export type {PromptAiCallsInterface};
+export {PromptAICallInterface,ChatMessage,ChatMessageArray};

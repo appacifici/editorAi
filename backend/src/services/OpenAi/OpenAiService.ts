@@ -1,24 +1,18 @@
 
-import dotenv                               from 'dotenv';
-import OpenAI                               from "openai";
-import MarkdownIt                           from 'markdown-it';
-
-import Site, { SiteWithIdType }             from "../../database/mongodb/models/Site";
-import SitePublication, { SitePublicationWithIdType }                      from '../../database/mongodb/models/SitePublication';
-import PromptAi, { PromptAiArrayType, PromptAiWithIdType }                             from "../../database/mongodb/models/PromptAi";
-import connectMongoDB                       from "../../database/mongodb/connect";
-import { ChatCompletionCreateParamsNonStreaming, ChatCompletionUserMessageParam } from 'openai/resources';
-import { isConstructorDeclaration } from 'typescript';
+import dotenv                                               from 'dotenv';
+import OpenAI                                               from "openai";
+import MarkdownIt                                           from 'markdown-it';
+import SitePublication, { SitePublicationWithIdType }       from '../../database/mongodb/models/SitePublication';
+import PromptAi, { PromptAiArrayType, PromptAiWithIdType }  from "../../database/mongodb/models/PromptAi";
+import connectMongoDB                                       from "../../database/mongodb/connect";
+import { ChatCompletionCreateParamsNonStreaming}            from 'openai/resources';
+import { PromptAICallInterface, PromptAiCallsInterface }    from './Interface/OpenAiInterface';
 
 const result = dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 class OpenAiService {
     htmlText:string;
 
-    static getCsvKeywords(titleGpt: string) {
-        throw new Error("Method not implemented.");
-    }    
-    
     openai  = new OpenAI({baseURL:process.env.OPENAI_BASE_URL, apiKey:process.env.OPENAI_API_KEY});
     md      = new MarkdownIt();    
 
@@ -27,48 +21,51 @@ class OpenAiService {
         connectMongoDB();
     }
 
-    private ucfirst(str:string|null):string|null {
-        if (str == null || typeof str !== 'string' || str.length === 0) {
-            return null;
-        }
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
     public async getInfoPromptAi(siteName: string, userContent:string, title:string): Promise<boolean> {
         try {            
-                //Recupera il sito su cui pubblicare
-                const sitePublication: SitePublicationWithIdType | null         = await SitePublication.findOne({ sitePublication: siteName });
+            //Recupera il sito su cui pubblicare
+            const sitePublication: SitePublicationWithIdType | null         = await SitePublication.findOne({sitePublication: siteName});
 
-                //Recupera la logina di generazione in base al sito su cui pubblicare
-                const promptAi: PromptAiWithIdType| null                        = await PromptAi.findOne({ sitePublication: siteName });                  
+            //Recupera la logina di generazione in base al sito su cui pubblicare
+            const promptAi: PromptAiWithIdType| null                        = await PromptAi.findOne({sitePublication: siteName});                  
 
-                if( promptAi != null ) {
-                    //Recupero la chiamata da fare definita nel db promptAi
-                    const call:string|null                                      = this.getCurrentCall(promptAi);
-                    if( call != null ) {
-                        console.log(call);
+            if(promptAi != null){                
 
-                        //Recupero i dati params per lo step corrente
-                        const step:ChatCompletionCreateParamsNonStreaming|null  = this.getCurrentStep(promptAi,call);                        
+                //Recupero la chiamata da fare definita nel db promptAi
+                const call:PromptAICallInterface|null                       = this.getCurrentCall(promptAi);
+                
+                if( call != null ) {
+                    const updateCalls:PromptAiCallsInterface                = this.setCompleteCall(promptAi,call.key) as PromptAiCallsInterface;                    
 
-                        if( step != null ) {                                                                   
-                            let jsonString:string       = JSON.stringify(step);
-                            const placeholder:string    = '[plachehorderContent]';                     
-                            userContent                 = userContent.replace(/"/g, '\\"');       
-                            jsonString                  = jsonString.replace(placeholder, userContent);                            
-                            console.log(jsonString);
+                    //Recupero i dati params per lo step corrente
+                    const step:ChatCompletionCreateParamsNonStreaming|null  = this.getCurrentStep(promptAi,call.key);                        
 
-                            const updatedStep:ChatCompletionCreateParamsNonStreaming = JSON.parse(jsonString);
-                            console.log(updatedStep);
-                            
+                    if( step != null ) {                                                                                           
+                        let jsonString:string       = JSON.stringify(step);
+                        const placeholder:string    = '[plachehorderContent]';                     
+                        userContent                 = userContent.replace(/"/g, '\\"');       
+                        jsonString                  = jsonString.replace(placeholder, userContent);                            
 
-                            const articleGpt: string | null | null  = await this.runChatCompletitions(step);    
-                        }
+                        //Avvia chiamata ad OpenAi
+                        const updatedStep:ChatCompletionCreateParamsNonStreaming    = JSON.parse(jsonString);                        
+                        const response: string | null | null                        = await this.runChatCompletitions(step);                        
+                        if( response !== null ) {
+                            //Aggiorna il campo calls e il campo data del PromptAiSchema
+                            const field:string = call.saveTo;                            
+                            const dataSave:Object = this.createDataSave(response, promptAi, call);                                                      
+
+                            const filter = { sitePublication: siteName };                        
+                            const update = { [field] : dataSave, calls: updateCalls };
+                            await PromptAi.findOneAndUpdate(filter, update);
+                            console.log(dataSave);  
+                        } else {
+                            console.log('Nessun risposta PromptAI');
+                        }                        
                     }
-                } else {
-                    console.log('Nessun PromptAI');
                 }
-                                      
+            } else {
+                console.log('Nessun PromptAI');
+            }                                      
         } catch (error:any) {         
             console.error(userContent + ': Errore durante il recupero degli articoli',error);            
             return false;
@@ -76,48 +73,75 @@ class OpenAiService {
         return true;
     }
 
+    private createDataSave(response: string, promptAi: PromptAiWithIdType, call: PromptAICallInterface): Object {
+        const field: string = call.saveTo;
+        let dataField: any = {}; // Inizializza dataField come un oggetto vuoto
+    
+        switch (field) {
+            case 'data':                                
+                dataField = promptAi.data || '';
+                break;
+        }
+    
+
+        if( dataField == '' ) {
+            dataField = [{[call.saveKey]: JSON.parse(response)}];
+        } else {
+            dataField = dataField.map((item:any) => ({ ...item, [call.saveKey]: JSON.parse(response) }));    
+        }
+        return dataField;
+    }
+    
+
     /**
      * Recupera la chiamata che deve essere effettuata da inviare a OpenAi     
      */
-    public getCurrentCall(promptAi: PromptAiWithIdType): string|null {
-        const calls: any = promptAi.calls;
-        console.log(calls);
-    
-        for (const obj of calls) {
-            for (const [key, value] of Object.entries(obj)) {
-                console.log(`Chiave: ${key}, Valore: ${value}`);
-                if (typeof value === 'number' && value === 0) {
-                    return key;
-                }
+    public getCurrentCall(promptAi: PromptAiWithIdType): PromptAICallInterface | null {
+        const calls: PromptAiCallsInterface = promptAi.calls as PromptAiCallsInterface;
+
+        for (let i = 0; i < calls.length; i++) {
+            const call = calls[i];
+            if (call.complete === 0) { // Assumo che `complete` sia 0 per le chiamate non completate
+                return call;
             }
         }
         return null;
+    }
+
+     /**
+     * Recupera la chiamata che deve essere effettuata da inviare a OpenAi     
+     */
+     public setCompleteCall(promptAi: PromptAiWithIdType,key:string): PromptAiCallsInterface | null {
+        const calls: PromptAiCallsInterface = promptAi.calls as PromptAiCallsInterface;        
+
+        for (let i = 0; i < calls.length; i++) {
+            const call = calls[i];
+            if (call.key === key) { // Assumo che `complete` sia 0 per le chiamate non completate
+                call.complete = 1;
+            }
+        }
+        return calls;
     }
 
     /**
      * Recupera il ChatCompletionCreateParamsNonStreaming dello step attuale     
      */
     public getCurrentStep(promptAi: PromptAiWithIdType, call:string): ChatCompletionCreateParamsNonStreaming|null {
-        const steps: any = promptAi.steps;        
-            
+        const steps: any = promptAi.steps;            
         for (const item of steps) {
             if (item.hasOwnProperty(call)) {
                 return item[call];                
             }
-        }
-       
+        }       
         return null;
     }
     
    
     public async runChatCompletitions(chatCompletionParam:ChatCompletionCreateParamsNonStreaming): Promise<string | null> {
         try {      
-
-            if (chatCompletionParam) {                
-                
-                //const completion = await this.openai.chat.completions.create(chatCompletionParam);
-                  
-                // let structureArticle = this.ucfirst(completion.choices[0].message.content);
+            if (chatCompletionParam) {                                                
+                const completion = await this.openai.chat.completions.create(chatCompletionParam);                  
+                return completion.choices[0].message.content;
                
                 // if( structureArticle != null ) {
                 //     //TODO salva in Schema PromptAI
