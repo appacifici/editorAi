@@ -5,8 +5,8 @@ import MarkdownIt                                           from 'markdown-it';
 import SitePublication, { SitePublicationWithIdType }       from '../../database/mongodb/models/SitePublication';
 import PromptAi, { PromptAiArrayType, PromptAiWithIdType }  from "../../database/mongodb/models/PromptAi";
 import connectMongoDB                                       from "../../database/mongodb/connect";
-import { ChatCompletionCreateParamsNonStreaming}            from 'openai/resources';
-import { PromptAICallInterface, PromptAiCallsInterface }    from './Interface/OpenAiInterface';
+import { ChatCompletionCreateParamsNonStreaming, ChatCompletionUserMessageParam}            from 'openai/resources';
+import { PromptAICallInterface, PromptAiCallsInterface, TYPE_IN_JSON }    from './Interface/OpenAiInterface';
 
 const result = dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -21,43 +21,40 @@ class OpenAiService {
         connectMongoDB();
     }
 
-    public async getInfoPromptAi(siteName: string, userContent:string, title:string): Promise<boolean> {
-        try {            
+    public async getInfoPromptAi(siteName: string, title:string): Promise<boolean> {
+        try {
             //Recupera il sito su cui pubblicare
             const sitePublication: SitePublicationWithIdType | null         = await SitePublication.findOne({sitePublication: siteName});
 
             //Recupera la logina di generazione in base al sito su cui pubblicare
-            const promptAi: PromptAiWithIdType| null                        = await PromptAi.findOne({sitePublication: siteName});                  
+            const promptAi: PromptAiWithIdType| null                        = await PromptAi.findOne({sitePublication: siteName});           
 
-            if(promptAi != null){                
+            if(promptAi != null) {
 
                 //Recupero la chiamata da fare definita nel db promptAi
                 const call:PromptAICallInterface|null                       = this.getCurrentCall(promptAi);
                 
                 if( call != null ) {
-                    const updateCalls:PromptAiCallsInterface                = this.setCompleteCall(promptAi,call.key) as PromptAiCallsInterface;                    
+                    const updateCalls:PromptAiCallsInterface                = this.setCompleteCall(promptAi,call.key) as PromptAiCallsInterface;
 
                     //Recupero i dati params per lo step corrente
-                    const step:ChatCompletionCreateParamsNonStreaming|null  = this.getCurrentStep(promptAi,call.key);                        
+                    const step:ChatCompletionCreateParamsNonStreaming|null  = this.getCurrentStep(promptAi,call.key);
+                    
+                    if( step != null ) {                        
+                        const jsonChatCompletation:ChatCompletionCreateParamsNonStreaming = this.appendUserMessage(step,call,title);
 
-                    if( step != null ) {                                                                                           
-                        let jsonString:string       = JSON.stringify(step);
-                        const placeholder:string    = '[plachehorderContent]';                     
-                        userContent                 = userContent.replace(/"/g, '\\"');       
-                        jsonString                  = jsonString.replace(placeholder, userContent);                            
-
-                        //Avvia chiamata ad OpenAi
-                        const updatedStep:ChatCompletionCreateParamsNonStreaming    = JSON.parse(jsonString);                        
-                        const response: string | null | null                        = await this.runChatCompletitions(step);                        
+                        const response: string | null | null                        = await this.runChatCompletitions(jsonChatCompletation);
                         if( response !== null ) {
                             //Aggiorna il campo calls e il campo data del PromptAiSchema
-                            const field:string = call.saveTo;                            
-                            const dataSave:Object = this.createDataSave(response, promptAi, call);                                                      
+                            const field:string = call.saveTo;
+                            
+                            //Genera il dato da salvare in base ai parametri settati nelle calls del PromptAI
+                            const dataSave:Object = this.createDataSave(response, promptAi, call);
 
-                            const filter = { sitePublication: siteName };                        
+                            const filter = { sitePublication: siteName };
                             const update = { [field] : dataSave, calls: updateCalls };
                             await PromptAi.findOneAndUpdate(filter, update);
-                            console.log(dataSave);  
+                            
                         } else {
                             console.log('Nessun risposta PromptAI');
                         }                        
@@ -67,10 +64,34 @@ class OpenAiService {
                 console.log('Nessun PromptAI');
             }                                      
         } catch (error:any) {         
-            console.error(userContent + ': Errore durante il recupero degli articoli',error);            
+            console.error(title + ': Errore durante il recupero degli articoli',error);            
             return false;
         }
         return true;
+    }
+
+    /**
+     * 
+     * Funzione che appende il role user al ChatCompletation     
+     */
+    private appendUserMessage(step:ChatCompletionCreateParamsNonStreaming,call:PromptAICallInterface,title:string): ChatCompletionCreateParamsNonStreaming {
+                
+        switch( call.msgUser.type ) {
+            //Se il tipo è inJson significa che il messaggio utente e nello stesso campo
+            case TYPE_IN_JSON:
+                for (const userMsg of call.msgUser.user) {
+                    const placeholder:string    = '[plachehorderContent]';
+                    let msg:string              = userMsg.message.replace(/\\"/g, '\\"');
+                    msg                         = msg.replace(placeholder, title);
+                    let chatMessage:ChatCompletionUserMessageParam = {
+                        role:    'user', 
+                        content: msg
+                    };
+                    step.messages.push(chatMessage)
+                }                
+            break;
+        }        
+        return step;
     }
 
     private createDataSave(response: string, promptAi: PromptAiWithIdType, call: PromptAICallInterface): Object {
@@ -140,7 +161,9 @@ class OpenAiService {
     public async runChatCompletitions(chatCompletionParam:ChatCompletionCreateParamsNonStreaming): Promise<string | null> {
         try {      
             if (chatCompletionParam) {                                                
-                const completion = await this.openai.chat.completions.create(chatCompletionParam);                  
+                console.log(chatCompletionParam);
+                const completion = await this.openai.chat.completions.create(chatCompletionParam);       
+                console.log(completion.choices[0].message.content);           
                 return completion.choices[0].message.content;
                
                 // if( structureArticle != null ) {
@@ -232,7 +255,7 @@ class OpenAiService {
 }
 
 const c = new OpenAiService();
-c.getInfoPromptAi('acquistigiusti.it','Rispondi in formato JSON, al titolo delimitato da virgolette triple. """Come scegliere un cardiofrequenzimetro"""','Come scegliere un cardiofrequenzimetro');
+c.getInfoPromptAi('acquistigiusti.it', 'Come scegliere un cardiofrequenzimetro');
 
 export default OpenAiService;
 
