@@ -51,8 +51,9 @@ npx next telemetry status
 
 npm install
 npm install forever -g
+npm install -g nodemon
 cd /home/ubuntu/site/magellano-gpt-editor/backend
-forever start socketLiveMacth.js
+NODE_ENV=production nodemon --exec 'tsx src/commands/Server.ts'
 
 sudo apt-get install ufw
 sudo ufw allow 22
@@ -94,8 +95,10 @@ sudo systemctl enable mongod
 #Firewall
 
 sudo ufw status numbered
-sudo ufw allow from 212.171.14.254 to any port 27017
+sudo ufw allow from  212.171.13.239 to any port 27017
 sudo ufw allow 22
+sudo ufw allow 3000
+sudo ufw allow 3001
 sudo ufw enable
 sudo ufw status numbered
 

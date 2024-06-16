@@ -1,7 +1,7 @@
 import axios from "axios";
 import fs from 'fs';
 import { createGunzip } from 'zlib';
-import { writeErrorLog } from "./Log";
+import { writeErrorLog } from "./Log/Log";
 
 async function readFileToServer(filePath: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
@@ -46,35 +46,27 @@ async function extractGzip(inputFilePath: string, outputFilePath: string): Promi
 }
 
 
-async function download(url: string, outputPath: string): Promise<void> {
-    try {
-        const response = await axios({
-            method: 'GET',
-            url: url,
-            responseType: 'stream'
+async function download(url: string, outputPath: string): Promise<void> {    
+    const response = await axios({
+        method: 'GET',
+        url: url,
+        responseType: 'stream'
+    });
+
+    response.data.pipe(fs.createWriteStream(outputPath));
+
+    await new Promise((resolve) => {
+        response.data.on('end', () => {
+            console.log('BaseApi: file scaricato correttamente: '+outputPath);
+            resolve(null); // Passiamo null o undefined come argomento
         });
 
-        response.data.pipe(fs.createWriteStream(outputPath));
-
-        await new Promise((resolve) => {
-            response.data.on('end', () => {
-                console.log('BaseApi: file scaricato correttamente: '+outputPath);
-                resolve(null); // Passiamo null o undefined come argomento
-            });
-
-            response.data.on('error', async (err: any) => {
-                await writeErrorLog("download:");
-                await writeErrorLog(err);
-                throw err; // Lancio l'errore per essere catturato dal blocco catch esterno
-            });
+        response.data.on('error', async (err: any) => {
+            await writeErrorLog("download:");
+            await writeErrorLog(err);
+            throw err; // Lancio l'errore per essere catturato dal blocco catch esterno
         });
-    } catch (error) {
-        // Gestione dell'errore
-        console.error("Si è verificato un errore durante il download del file");
-        await writeErrorLog("download:");
-        await writeErrorLog(error);
-        throw error; // Rilancio l'errore per propagarlo
-    }
+    });
 }
 
 export {download,extractGzip,readFileToServer};

@@ -9,6 +9,7 @@ program.version('1.0.0').description('CLI team commander')
         switch( options.site ) {            
             case 'bluedizioni.it':                                             
             case 'roma.cronacalive.it':                                             
+            case 'modaeimmagine.it':                                             
                 wodpressApi.getWpApiCategories(options.site);        
             break;
         } 

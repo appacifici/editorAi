@@ -1,6 +1,9 @@
 import mongoose, { Document, Schema, Model, ObjectId } from 'mongoose';
 
 type AlertType = {
+    articleId?:          string | null;
+    originSite?:         string | null;
+    destinationSite?:    string | null;
     processName?:        string | null;
     process?:            string | null;
     childProcess?:       string | null;
@@ -20,6 +23,24 @@ type AlertArrayWithIdType = AlertWithIdType[];
 type AlertArrayType       = AlertType[];
 
 const AlertSchema = new mongoose.Schema({
+    articleId: { 
+        type:       String, 
+        required:   false, 
+        default:    null,
+        maxlength:  255 
+    },
+    originSite: { 
+        type:       String, 
+        required:   false, 
+        default:    null,
+        maxlength:  255 
+    },
+    destinationSite: { 
+        type:       String, 
+        required:   false, 
+        default:    null,
+        maxlength:  255 
+    },
     processName: { 
         type:       String, 
         required:   false, 

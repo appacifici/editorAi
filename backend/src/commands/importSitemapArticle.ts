@@ -8,7 +8,7 @@ const program = new Command();
 program.version('1.0.0').description('CLI team commander') 
     .option('-s, --site <type>', 'Sito da lanciare')
     .option('-a, --action <type>', 'Azione da lanciare')
-    .action((options) => {            
+    .action(async (options) => {                    
         switch( options.site ) {            
             // case 'vanityfair.it':                       
             //     new Vanityfair(options.action);                
@@ -30,7 +30,15 @@ program.version('1.0.0').description('CLI team commander')
             case 'larchitetto.it':                       
             case 'biopianeta.it':                       
             case 'wineandfoodtour.it':                       
-                new DinamycScraper(options.action, options.site);                
+            const dinamycScraper        = new DinamycScraper(options.action, options.site);  
+            const processName: string  	= `dinamycScraper`;
+            const processLabel: string 	= `dinamycScraper ${options.options} ${options.site}`;
+            const alertProcess: string 	= dinamycScraper.alertUtility.initProcess(processLabel);
+            dinamycScraper.alertUtility.setLimitWrite(60000); 
+            await dinamycScraper.init(alertProcess, processName);
+
+		    await dinamycScraper.alertUtility.write(alertProcess, processName, options.site, options.sitePublication);		
+                              
             break;
         }
     });

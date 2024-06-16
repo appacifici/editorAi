@@ -11,7 +11,10 @@ type SitePublicationType = {
     username:           string;
     password:           string; 
     active:             number;   
-    page:               number;   
+    page?:              number;   
+    cronGenerateAi:     string;   
+    cronSendToWp:       string;   
+    promptAiId?:        string;   
     [key: string]:      any;
 }
 
@@ -27,7 +30,8 @@ const SitePublicationSchema   = new Schema({
     },    
     page: {
         type:       Number,
-        required:   true
+        required:   false,
+        default:    1
     },
     tokenUrl: { 
         type:       String, 
@@ -67,7 +71,19 @@ const SitePublicationSchema   = new Schema({
         required:   true, 
         min:        0, 
         max:        1 
-    }    
+    },
+    cronGenerateAi: { 
+        type:       String, 
+        required:   false        
+    },  
+    cronSendToWp: { 
+        type:       String, 
+        required:   false        
+    },
+    promptAiId: { 
+        type:       String, 
+        required:   false        
+    },  
 });
 
 SitePublicationSchema.index({ site: 1, url:1 }, { unique: true });

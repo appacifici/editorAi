@@ -1,3 +1,7 @@
+import { ArticleWithIdType } from "../../../database/mongodb/models/Article";
+import { SiteArrayWithIdType, SiteWithIdType } from "../../../database/mongodb/models/Site";
+import { SitePublicationWithIdType } from "../../../database/mongodb/models/SitePublication";
+
 //Da dove deve leggere i dati per creare il message user nel json call
 const TYPE_IN_JSON:string                               = 'inJson';
 const TYPE_READ_STRUCTURE_FIELD:string                  = 'readStructureField';
@@ -11,6 +15,12 @@ const ACTION_WRITE_BODY_ARTICLE:string          = 'writeBodyArticle'; //Salvatag
 const ACTION_WRITE_TOTAL_ARTICLE:string         = 'writeTotalArticle'; //Salvataggio articolo completo in 1 step
 const ACTION_CALLS_COMPLETE:string              = 'callsCompete'; //Tutte le calls eseguite
 const ACTION_READ_WRITE_DYNAMIC_SCHEMA:string   = 'readWriteDimanycSchema'; //Tutte le calls eseguite
+
+interface NextArticleGenerate {
+    sitePublication: SitePublicationWithIdType;
+    article:ArticleWithIdType | null;
+    site:SiteWithIdType | null;
+}
 
 interface ChatMessageArray {
     messages:       ChatMessage[];
@@ -63,6 +73,10 @@ interface StructureChapter {
     type:       string;
     value:      string;
 }
+
+function isStructureChapter(obj: any): obj is StructureChapter {
+    return obj && typeof obj.type === 'string' && typeof obj.value === 'string';
+}
   
 interface StructureChaptersData extends Array<{
     getStructure: {
@@ -76,11 +90,13 @@ type PromptAiCallsInterface = PromptAICallInterface[];
 export type {PromptAiCallsInterface,TypeMsgUserRaplace};
 export {
     PromptAICallInterface, 
+    NextArticleGenerate,
     ChatMessage,
     ChatMessageArray, 
     StructureChapter, 
     StructureChaptersData, 
     TypeSavaToObject,
+    isStructureChapter,
     TYPE_IN_JSON, 
     TYPE_READ_STRUCTURE_FIELD,
     TYPE_READ_FROM_DATA_PROMPT_AND_ARTICLE,

@@ -1,30 +1,37 @@
 
-import axios from "axios";
-import dotenv from 'dotenv';
-import * as fs from 'fs';
-import FormData from 'form-data';
-import jimp from 'jimp';
-import sharp from "sharp";
+import axios                            from "axios";
+import dotenv                           from 'dotenv';
+import * as fs                          from 'fs';
+import FormData                         from 'form-data';
+import sharp                            from "sharp";
 
-import Article, { ArticleWithIdType } from "../database/mongodb/models/Article";
-import Site, { SiteWithIdType } from "../database/mongodb/models/Site";
-import connectMongoDB from "../database/mongodb/connect";
+import Article, { ArticleWithIdType }   from "../database/mongodb/models/Article";
+import Site, { SiteWithIdType }         from "../database/mongodb/models/Site";
+import connectMongoDB                   from "../database/mongodb/connect";
 import SitePublication,
-{ SitePublicationWithIdType } from "../database/mongodb/models/SitePublication";
-import ImageWP, { ImageType } from "../database/mongodb/models/ImageWP";
-import { findImageByWords } from "./MongooseFind";
-import ChatGptApi from "./ChatGptApi";
-import { writeErrorLog } from "./Log";
-import { WordpressCategory } from "./OpenAi/Interface/WordpressInterface";
+{ SitePublicationWithIdType }           from "../database/mongodb/models/SitePublication";
+import ImageWP, { ImageType }           from "../database/mongodb/models/ImageWP";
+import { writeErrorLog }                from "./Log/Log";
+import { WordpressCategory }            from "./OpenAi/Interface/WordpressInterface";
+import { BaseAlert } from "./Alert/BaseAlert";
 
 const result = dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
-class WordpressApi {
+
+//TODO da definire in altro file
+function isError(e: any): e is Error {
+    return e instanceof Error;
+}
+
+class WordpressApi extends BaseAlert{
+    
     constructor() {
+        super();        
         connectMongoDB();
     }
 
     public async getWpApiCategories(siteName: string) {
         try {
+            console.log('ecc');
             const sitePublication: any = await SitePublication.findOne({ sitePublication: siteName });
             const page = sitePublication?.page;
             if (sitePublication !== null) {
@@ -50,15 +57,18 @@ class WordpressApi {
 
             }
 
-        } catch (error: any) {
-            console.error('getImagesFromWordPress: Error fetching categories');
-            await writeErrorLog("getWpApiCategories: Error fetching categories:");
-            await writeErrorLog(error);
-            process.exit(1);
+        } catch (error: unknown) {                     
+            if (isError(error)) {
+                return error as Error;
+            } else {
+                // Gestisci il caso in cui `error` non sia un'istanza di `Error`
+                // Potresti voler creare e restituire un nuovo Error standard qui
+                return new Error('downloadImage errore generico');
+            }
         }
     }
 
-    public async getImagesFromWordPress(siteName: string) {
+    public async getImagesFromWordPress(siteName: string):Promise<Error|void> {
         try {
             const sitePublication: any = await SitePublication.findOne({ sitePublication: siteName });
             const page = sitePublication?.page;
@@ -95,28 +105,25 @@ class WordpressApi {
                 } else {
                     console.log('getImagesFromWordPress: No images found.');
                 }
-
-                try {
-                    sitePublication.page += 1;
-                    await sitePublication.save();
-                    this.getImagesFromWordPress(siteName);
-                    console.log("getImagesFromWordPress: Aggiornamento di 'page' completato con successo.");
-                } catch (error) {
-                    console.error("getImagesFromWordPress: Si è verificato un errore durante l'aggiornamento di 'page':" + page);
-                    await writeErrorLog("getImagesFromWordPress: Si è verificato un errore durante l'aggiornamento di page: " + page);
-                    process.exit(1);
-                }
+                
+                sitePublication.page += 1;
+                await sitePublication.save();
+                this.getImagesFromWordPress(siteName);
+            
             }
 
-        } catch (error: any) {
-            console.error('getImagesFromWordPress: Error fetching images');
-            await writeErrorLog("getImagesFromWordPress: Error fetching images:");
-            await writeErrorLog(error);
-            process.exit(1);
+        } catch (error: unknown) {                     
+            if (isError(error)) {
+                return error as Error;
+            } else {
+                // Gestisci il caso in cui `error` non sia un'istanza di `Error`
+                // Potresti voler creare e restituire un nuovo Error standard qui
+                return new Error('getImagesFromWordPress errore generico');
+            }
         }
     }
 
-    private async downloadImage(url: string, outputPath: string): Promise<void> {
+    private async downloadImage(url: string, outputPath: string): Promise<void|Error> {
         try {
             const response = await axios({
                 method: 'GET',
@@ -132,22 +139,22 @@ class WordpressApi {
                     resolve(null); // Passiamo null o undefined come argomento
                 });
 
-                response.data.on('error', async (err: any) => {
-                    await writeErrorLog("downloadImage:");
-                    await writeErrorLog(err);
+                response.data.on('error', async (err: any) => {                    
                     throw err; // Lancio l'errore per essere catturato dal blocco catch esterno
                 });
             });
-        } catch (error) {
-            // Gestione dell'errore
-            console.error("Si è verificato un errore durante il download dell'immagine");
-            await writeErrorLog("downloadImage:");
-            await writeErrorLog(error);
-            throw error; // Rilancio l'errore per propagarlo
+        } catch (error: unknown) {                     
+            if (isError(error)) {
+                return error as Error;
+            } else {
+                // Gestisci il caso in cui `error` non sia un'istanza di `Error`
+                // Potresti voler creare e restituire un nuovo Error standard qui
+                return new Error('downloadImage errore generico');
+            }
         }
     }
 
-    private async resizeAndCompressImage(inputPath: string, outputPath: string) {
+    private async resizeAndCompressImage(inputPath: string, outputPath: string): Promise<boolean|Error>  {
         try {
             let quality = 100; // Inizia con la qualità al 100%
             let sizeOk = false;
@@ -192,20 +199,26 @@ class WordpressApi {
                 } else {
                     sizeOk = true;
                     console.log('Image processing completed.');
+                    return true;
                 }
             }
 
             if (!sizeOk) {
                 throw new Error("Non è possibile comprimere l'immagine sotto i 90KB mantenendo una qualità visiva accettabile.");
             }
-        } catch (error) {
-            console.error('Error processing image:', error);
+        } catch (error: unknown) {                     
+            if (isError(error)) {
+                return error as Error;
+            } else {
+                // Gestisci il caso in cui `error` non sia un'istanza di `Error`
+                // Potresti voler creare e restituire un nuovo Error standard qui
+                return new Error('resizeAndCompressImage errore generico');
+            }
         }
+        return false;
     }
 
-
-
-    private async uploadImageAndGetId(imagePath: string, sitePublication: SitePublicationWithIdType, titleGpt: string | undefined): Promise<object> {
+    private async uploadImageAndGetId(imagePath: string, sitePublication: SitePublicationWithIdType, titleGpt: string | undefined): Promise<object|Error> {
         const imageName = titleGpt !== undefined ? this.removeStopWords(titleGpt) : 'img_' + Math.floor(Math.random() * (1000 - 1 + 1)) + 1;
         let newImg = imageName.replace(/ /g, "_");
         newImg = imageName.replace(/\//g, "");
@@ -244,73 +257,133 @@ class WordpressApi {
                 }
             });
             return response.data;
-        } catch (error: any) {
-            await writeErrorLog('uploadImageAndGetId: Errore durante il caricamento dell\'immagine:' + titleGpt);
-            await writeErrorLog(error);
-            throw error; // Rilancia l'errore per gestirlo in un punto superiore
-
+        } catch (error: unknown) {                     
+            if (isError(error)) {
+                return error as Error;
+            } else {
+                // Gestisci il caso in cui `error` non sia un'istanza di `Error`
+                // Potresti voler creare e restituire un nuovo Error standard qui
+                return new Error('uploadImageAndGetId errore generico');
+            }
         }
     }
 
 
-    public async sendToWPApi(siteName: string, send: number): Promise<Boolean> {
-        try {
-            const sitePublication: SitePublicationWithIdType | null = await SitePublication.findOne({ sitePublication: siteName });
-            const article: ArticleWithIdType | null = await Article.findOne({ sitePublication: sitePublication?._id, genarateGpt: 1, send: 0 });
-            const site: SiteWithIdType | null = await Site.findOne({ _id: article?.site });
+    public async sendToWPApi(alertProcess:string,siteName: string, send: number, articleSelected?:ArticleWithIdType|null): Promise<Boolean> {
+        
+
+        this.alertUtility.setCallData(alertProcess, `SitePublication.findOne: sitePublication`,false);
+        this.alertUtility.setCallData(alertProcess, siteName);
+        const sitePublication: SitePublicationWithIdType | null = await SitePublication.findOne({ sitePublication: siteName });
+        if(sitePublication === null ) {  
+            console.log('SitePublication == null');
+            //await writeErrorLog(siteName + '- getInfoPromptAi: promptAi == null: siteName:' + siteName+ ' promptAiId:'+promptAiId);
+            this.alertUtility.setError(alertProcess, 'SitePublication.findOne:<br> SitePublication == null', false);                
+            this.alertUtility.setError(alertProcess, siteName);                 
+            return false;                
+        }
+        this.alertUtility.setCallResponse(alertProcess, `SitePublication.findOne:<br>`, false);
+        this.alertUtility.setCallResponse(alertProcess, sitePublication);
+
+        //------------------------------------------------------------------------------------------------------------//
+
+        this.alertUtility.setCallData(alertProcess, `Article.findOne: sitePublication - genarateGpt - send`,false);
+        this.alertUtility.setCallData(alertProcess, sitePublication, false);
+        this.alertUtility.setCallData(alertProcess, 1, false);
+        this.alertUtility.setCallData(alertProcess, 0);
+
+        let  article: ArticleWithIdType | null;
+        if( articleSelected === undefined ) {
+            article= await Article.findOne({ sitePublication: sitePublication?._id, genarateGpt: 1, send: 0 }).sort({ lastMod: 1 }) as ArticleWithIdType | null;
+        } else {
+            article = articleSelected;
+        }
+        if(article === null ) {                  
+            this.alertUtility.setError(alertProcess, 'Article.findOne:<br> article == null');                
+            return false;                
+        }
+        this.alertUtility.setCallResponse(alertProcess, `Article.findOne:<br>`, false);
+        this.alertUtility.setCallResponse(alertProcess, article);
+
+        //------------------------------------------------------------------------------------------------------------//
+        
+        this.alertUtility.setCallData(alertProcess, `Site.findOne: _id`,false);
+        this.alertUtility.setCallData(alertProcess, article?.site);            
+        const site: SiteWithIdType | null = await Site.findOne({ _id: article?.site });
+        if(site === null ) {                  
+            this.alertUtility.setError(alertProcess, 'Site.findOne:<br> site == null');                
+            return false;                
+        }
+        this.alertUtility.setCallResponse(alertProcess, `Site.findOne:<br>`, false);
+        this.alertUtility.setCallResponse(alertProcess, site);
 
 
 
-            if (sitePublication === null || article === null || article.titleGpt === null) {
-                console.log(article);
-                await writeErrorLog("sendToWPApi sitePublication === null || article === null || article.titleGpt === undefined");
-                return false;
-            }
+        // const chatGptApi = new ChatGptApi();
+        // let textString: string | null = await chatGptApi.getCsvKeywords(article.titleGpt);
+        // console.log(article.titleGpt);
+
+        // if (textString == null) {
+        //     console.error(textString);
+        //     await writeErrorLog("sendToWPApi textString === null");
+        //     return false;
+        // }
+
+        // const regex = /\[[^\]]*\]/;
+        // const jsonString = textString.match(regex);
+        // if (jsonString == null) {
+        //     await writeErrorLog("sendToWPApi jsonString === null");
+        //     console.error(jsonString);
+        //     return false;
+        // }                        
+
+        // let results: any = [];
+        // results = JSON.parse(jsonString[0]);            
+        // console.log(results);            
+
+        // let imageWP = await findImageByWords(results, sitePublication._id);            
+
+        // if (imageWP === undefined && article.titleGpt !== undefined) {
+        //     console.log('eccomi');
+        //     const words = this.adaptReponseWeight(article.titleGpt);
+        //     console.log(words);
+        //     imageWP = await findImageByWords(words, sitePublication._id);
+        // }
+
+        // const reponseImage: any = await this.uploadImageAndGetId(article.imageLink, sitePublication, article.titleGpt);                
 
 
-            // const chatGptApi = new ChatGptApi();
-            // let textString: string | null = await chatGptApi.getCsvKeywords(article.titleGpt);
-            // console.log(article.titleGpt);
+        this.alertUtility.setCallData(alertProcess, `uploadImageAndGetId(article.img, sitePublication, article.titleGpt)`,false);
+        this.alertUtility.setCallData(alertProcess, article.img, false);     
+        this.alertUtility.setCallData(alertProcess, sitePublication, false);     
+        this.alertUtility.setCallData(alertProcess, article.titleGpt);     
+        const reponseImage:any|Error = await this.uploadImageAndGetId(article.img, sitePublication, article.titleGpt);
+        if( reponseImage instanceof Error ) {
+            this.alertUtility.setError(alertProcess, `uploadImageAndGetId:<br> `, false );
+            this.alertUtility.setError(alertProcess, reponseImage, false );
 
-            // if (textString == null) {
-            //     console.error(textString);
-            //     await writeErrorLog("sendToWPApi textString === null");
-            //     return false;
-            // }
+            const filtro = { _id: article._id };
+            const aggiornamento = { send: 3 };
+            await Article.findOneAndUpdate(filtro, aggiornamento, { new: true });
+            this.alertUtility.setError(alertProcess, `uploadImageAndGetId Error - Set Article.findOneAndUpdate send:3 `);
 
-            // const regex = /\[[^\]]*\]/;
-            // const jsonString = textString.match(regex);
-            // if (jsonString == null) {
-            //     await writeErrorLog("sendToWPApi jsonString === null");
-            //     console.error(jsonString);
-            //     return false;
-            // }                        
+            return false;
+        }
+        this.alertUtility.setCallResponse(alertProcess, `uploadImageAndGetId`,false);
+        this.alertUtility.setCallResponse(alertProcess, reponseImage);
 
-            // let results: any = [];
-            // results = JSON.parse(jsonString[0]);            
-            // console.log(results);            
+        const userData = {
+            username: sitePublication.username,
+            password: sitePublication.password
+        };
+        // URL per il punto finale di autenticazione JWT
+        const authUrl = sitePublication.tokenUrl;
 
-            // let imageWP = await findImageByWords(results, sitePublication._id);            
-
-            // if (imageWP === undefined && article.titleGpt !== undefined) {
-            //     console.log('eccomi');
-            //     const words = this.adaptReponseWeight(article.titleGpt);
-            //     console.log(words);
-            //     imageWP = await findImageByWords(words, sitePublication._id);
-            // }
-
-            // const reponseImage: any = await this.uploadImageAndGetId(article.imageLink, sitePublication, article.titleGpt);                
-
-            const reponseImage: any = await this.uploadImageAndGetId(article.img, sitePublication, article.titleGpt);
-
-            const userData = {
-                username: sitePublication.username,
-                password: sitePublication.password
-            };
-
-            // URL per il punto finale di autenticazione JWT
-            const authUrl = sitePublication.tokenUrl;
-
+        this.alertUtility.setCallData(alertProcess, `fetch(authUrl)`,false);
+        this.alertUtility.setCallData(alertProcess, authUrl,false);
+        this.alertUtility.setCallData(alertProcess, userData);            
+        let token;
+        try{
             // Effettua una richiesta POST per generare il token di autenticazione
             const tokenResponse = await fetch(authUrl, {
                 method: 'POST',
@@ -319,50 +392,68 @@ class WordpressApi {
                 },
                 body: JSON.stringify(userData)
             });
+            
             const tokenData = await tokenResponse.json();
-            const token = tokenData.token;
-
-            if (article !== null) {
-                const auth = {
-                    'Authorization': `Bearer ${token}`
-                };
-                const wordpressAPIURL = sitePublication.url;
-                const postData = {
-                    title: article.h1Gpt,
-                    content: `<img src="${reponseImage.guid.raw}">` + article.bodyGpt,
-                    _yoast_wpseo_title: article.titleGpt,
-                    _yoast_wpseo_metadesc: article.descriptionGpt,
-                    yoast_title: article.titleGpt,
-                    yoast_meta: {
-                        description: article.descriptionGpt
-                    },
-                    status: 'publish',
-                    featured_media: reponseImage.id,
-                    author: article?.userPublishSite, // Aggiungi lo userId dell'autore
-                    categories: [article?.categoryPublishSite]
-                };
-
-
-                // Effettua la richiesta POST per creare il post
-                await axios.post(wordpressAPIURL, postData, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                console.log('sendToWPApi: ' + siteName + ': Post inserito con successo:');
-
-                // Aggiorna il campo 'send' dell'articolo
-                const filtro = { _id: article._id };
-                const aggiornamento = { send: 1 };
-                await Article.findOneAndUpdate(filtro, aggiornamento, { new: true });
-                console.log('sendToWPApi: ' + siteName + ': Set send 1 avvenuta con successo:' + article._id);
-            }
-        } catch (error) {
-            console.log(error);
-            await writeErrorLog('sendToWPApi: ' + siteName + ': Errore durante l\'operazione:');
-            await writeErrorLog(error);
+            token = tokenData.token;
+            this.alertUtility.setCallResponse(alertProcess, `fetch(authUrl)`,false);
+            this.alertUtility.setCallResponse(alertProcess, tokenData);
+        } catch (error: unknown) {                     
+            this.alertUtility.setError(alertProcess, `fetch(authUrl`, false );
+            this.alertUtility.setError(alertProcess, error );
             return false;
         }
+
+        this.alertUtility.setCallData(alertProcess, `PublishWP - auth - postData`, false);            
+        const auth = {
+            'Authorization': `Bearer ${token}`
+        };
+        const wordpressAPIURL = sitePublication.url;
+        const postData = {
+            title: article.h1Gpt,
+            content: `<img src="${reponseImage.guid.raw}">` + article.bodyGpt,
+            _yoast_wpseo_title: article.titleGpt,
+            _yoast_wpseo_metadesc: article.descriptionGpt,
+            yoast_title: article.titleGpt,
+            yoast_meta: {
+                description: article.descriptionGpt
+            },
+            status: 'publish',
+            featured_media: reponseImage.id,
+            author: article?.userPublishSite, // Aggiungi lo userId dell'autore
+            categories: [article?.categoryPublishSite]
+        };
+
+        this.alertUtility.setCallData(alertProcess, auth);   
+        this.alertUtility.setCallData(alertProcess, postData);   
+        try{            
+            await axios.post(wordpressAPIURL, postData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            this.alertUtility.setCallResponse(alertProcess, `PublishWP: OK`,false);
+            
+        } catch (error: unknown) {                     
+            this.alertUtility.setError(alertProcess, `PublishWP`, false );
+            this.alertUtility.setError(alertProcess, error );
+            return false;
+        }
+
+        this.alertUtility.setCallData(alertProcess, `Article.findOneAndUpdate send: 1`, false);   
+        try{         
+            // Aggiorna il campo 'send' dell'articolo
+            const filtro = { _id: article._id };
+            const aggiornamento = { send: 1 };
+            await Article.findOneAndUpdate(filtro, aggiornamento, { new: true });
+            this.alertUtility.setCallResponse(alertProcess, `Article.findOneAndUpdate OK`);
+
+        } catch (error: unknown) {                     
+            this.alertUtility.setError(alertProcess, `Article.findOneAndUpdate`, false );
+            this.alertUtility.setError(alertProcess, error );
+            return false;
+        }
+            
+        
         return true;
     }
 

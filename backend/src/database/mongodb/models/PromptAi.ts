@@ -8,9 +8,11 @@ type PromptAiType = {
     calls:                  Object; // [{"getStructure":0},{"getArticle":0}]  
 	  steps:					        Object;	// [{"getStructure": {"messages":[{"role":"system","content":"You are a useful assistant designed to produce JSON, expert in generating buying guides. Your goal is to generate the structure of a guide that answers all the questions a user needs to make a purchase. You will be provided with titles for which you will have to generate the structure of the chapters and subchapters of the text to be written. The text generated must be very comprehensive and contain all the useful information to make a choice to purchase a product. Maximum 10 chapters. Reply with a JSON with this format: [{\"introduction\": { \"h2\": \"string\", \"h3\": [\"string\",\"string\",\"string\"]},...]",},{"role":"user","content":"user"}],"model":"gpt-3.5-turbo-1106","temperature":0.6,"top_p":0.9,"response_format":{"type":"json_object"}}}]
     data?:                  Object|string; // [{"structure":{"introduction":{"h2":"Come scegliere un cardiofrequenzimetro","h3":["Cos'è un cardiofrequenzimetro","Benefici dell'utilizzo di un cardiofrequenzimetro","Considerazioni prima dell'acquisto"]},"tipi_di_cardiofrequenzimetri":{"h2":"Tipi di cardiofrequenzimetri","h3":["Cardiofrequenzimetri da polso","Cardiofrequenzimetri da torace","Cardiofrequenzimetri da dito"]},"funzionalità_da_valutare":{"h2":"Funzionalità da valutare","h3":["Precisione della misurazione","Connettività e compatibilità con dispositivi","Modalità di visualizzazione dei dati"]},"comfort_e_durata_della_batteria":{"h2":"Comfort e durata della batteria","h3":["Materiali e design","Autonomia della batteria","Impermeabilità e resistenza al sudore"]},"applicazioni_e_compatibilità":{"h2":"Applicazioni e compatibilità","h3":["Applicazioni per il monitoraggio","Compatibilità con smartphone e smartwatch","Integrazione con altri dispositivi fitness"]}}]
-	  numStep:                number; //  Numero richieste step contemporane
-    complete:				        number;	// Se è tutto completato
-    typePrompt:             number; // Usare costantio 
+	  numStep?:               number; //  Numero richieste step contemporane
+    complete?:				      number;	// Se è tutto completato
+    typePrompt?:            number; // Usare costantio 
+    defaultPrompt?:         number; // Usare costantio 
+    title?:                 string;
 }
 
 interface IPromptAi extends Document, Omit<PromptAiType, '_id'> {}
@@ -37,18 +39,33 @@ const PromptAiSchema = new Schema({
     },
     data: {
       type: Object,
-      required: false
+      required: false,
+      default: []
     },
     numStep: {
       type: Number,
-      required: true
+      required: false,
+      default: 1
     },
     complete: {
-      type: Number,         
+      type: Number,   
+      required: false,
+      default: 0      
     },
     typePrompt: {
       type: Number,
-      required: true
+      required: false,
+      default: 1
+    },  
+    defaultPrompt: {
+      type: Number,
+      required: false,
+      default: 0
+    },  
+    title: {
+      type: String,
+      required: false,
+      default: null
     }   
 });
 

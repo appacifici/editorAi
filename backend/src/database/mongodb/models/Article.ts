@@ -1,8 +1,10 @@
-import mongoose, { Document, Schema, Model, ObjectId } from 'mongoose';
+import mongoose, { Document, Schema, Model, ObjectId }  from 'mongoose';
+import { SiteWithIdType }                               from './Site';
+import { SitePublicationWithIdType }                    from './SitePublication';
 
 type ArticleType = {        
-    site:               Schema.Types.ObjectId;
-    sitePublication:    Schema.Types.ObjectId;
+    site:               Schema.Types.ObjectId|SiteWithIdType;
+    sitePublication:    Schema.Types.ObjectId|SitePublicationWithIdType;
     url:                string;
     body:               string;
     title:              string;
@@ -13,10 +15,10 @@ type ArticleType = {
     titleGpt?:          string;
     descriptionGpt?:    string;
     h1Gpt?:             string;
-    send?:              number;   
-    genarateGpt:        number;   
-    categoryPublishSite:Number;   
-    userPublishSite:    Number;   
+    send?:              number|string;   
+    genarateGpt:        number|string;   
+    categoryPublishSite:number|string;   
+    userPublishSite:    number|string;   
     lastMod:            Date;   
     publishDate:        Date;   
     [key: string]:      any;
@@ -83,13 +85,13 @@ const ArticleSchema   = new Schema({
         type:       Number, 
         required:   false, 
         min:        0, 
-        max:        1 
+        max:        5 
     },
     genarateGpt: { 
         type:       Number, 
         required:   false, 
         min:        0, 
-        max:        1 
+        max:        5 
     },
     lastMod: { 
         type:       Date, 
@@ -113,7 +115,8 @@ ArticleSchema.index({ site: 1, url:1 }, { unique: true });
 ArticleSchema.index({ send: -1 });
 ArticleSchema.index({ generate: -1, sitePublication: -1, lastMod:-1 });
 
-const Article:Model<IArticle> = mongoose.models.Article || mongoose.model('Article', ArticleSchema);
+const Article:Model<IArticle> = mongoose.models.Article || mongoose.model<IArticle>('Article', ArticleSchema);
+
 export type {IArticle,ArticleType, ArticleWithIdType, ArticleArrayWithIdType, ArticleArrayType};
 export {ArticleSchema};
 export default Article;

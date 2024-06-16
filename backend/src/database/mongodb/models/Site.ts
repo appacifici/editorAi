@@ -9,9 +9,10 @@ type SiteType = {
     lastmod?:           Date;   
     active:             number;   
     categoryPublishSite:Number;   
-    userPublishSite:    Number;  
+    userPublishSite:    string;  
     selectorBody:       string;  
     selectorImg:        string;  
+    cronImportSitemap:  string;  
 }
 
 interface ISite extends Document, Omit<SiteType, '_id'> {}
@@ -56,7 +57,7 @@ const SiteSchema   = new Schema({
         required:   false        
     },    
     userPublishSite: { 
-        type:       Number, 
+        type:       String, 
         required:   false        
     },
     selectorBody: { 
@@ -66,13 +67,17 @@ const SiteSchema   = new Schema({
     selectorImg: { 
         type:       String, 
         required:   false        
+    },
+    cronImportSitemap: { 
+        type:       String, 
+        required:   false        
     } 
 });
 
 SiteSchema.index({ site: 1, url:1 }, { unique: true });
 SiteSchema.index({ active: -1 });
 
-const Site:Model<ISite> = mongoose.models.Site || mongoose.model('Site', SiteSchema);
+const Site:Model<ISite> = mongoose.models.Site || mongoose.model<ISite>('Site', SiteSchema);
 export type {ISite,SiteType, SiteWithIdType, SiteArrayWithIdType, SiteArrayType};
 export {SiteSchema};
 export default Site;
