@@ -8,7 +8,7 @@ if (result.error) {
 
 const connectMongoDB = async () => {
     try {
-        await mongoose.connect(`mongodb://${process.env.MONGO_DB_HOST}:27017/editorai`, {
+        await mongoose.connect(`mongodb://${process.env.MONGO_DB_HOST}:27017/newsgpt`, {
             
         });
         console.log('Mongoose connected to MongoDB');

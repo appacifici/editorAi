@@ -7,7 +7,7 @@ import Site, {SiteArrayWithIdType, SiteWithIdType}              from "../../data
 import BaseApi                                  from "./BaseApi";
 import { ReadSitemapSingleNodeResponse,
          ReadSitemapResponse }                  from "../interface/SitemapInterface";
-import { ScrapedData }                          from "../interface/VanityfairInterface";
+import { ScrapedData }                          from "../interface/ScrapedInterface";
 import chatGptApi    from "../../services/ChatGptApi";
 import { SitePublicationArrayWithIdType, SitePublicationWithIdType } from "../../database/mongodb/models/SitePublication";
 import { writeErrorLog } from "../../services/Log";
@@ -39,12 +39,14 @@ class Vanityfair extends BaseApi {
             const h1Content         = cheerioLoad('h1').text() || '';    
             const metaTitle         = cheerioLoad('title').text();
             const metaDescription   = cheerioLoad('meta[name="description"]').attr('content');
+            const img               = cheerioLoad('img.responsive-image__image').first().attr('src');
     
             return {
-                bodyContainerHTML: bodyContainerHTML,
+                bodyContainerHTML: removeHtmlTags(bodyContainerHTML),
                 h1Content: h1Content,
                 metaTitle: metaTitle,
-                metaDescription: metaDescription
+                metaDescription: metaDescription,
+                img: img,
             };
         } catch (error:any) {
             await writeErrorLog(`scrapeWebsite: Vanityfair.it: Errore durante lo scraping della pagina`);
@@ -53,6 +55,20 @@ class Vanityfair extends BaseApi {
             return null;
         }
     }
+
 }
+
+function removeHtmlTags(htmlString:string) {
+    // Carica la stringa HTML utilizzando cheerio
+    const $ = cheerio.load(htmlString);
+    
+    // Trova tutti i tag HTML e rimuovili
+    $('*').each((index: any, element: any) => {
+      $(element).replaceWith($(element).text().trim());
+    });
+    
+    // Ritorna la stringa senza tag HTML
+    return $.text().trim();
+  }
 
 export default Vanityfair;

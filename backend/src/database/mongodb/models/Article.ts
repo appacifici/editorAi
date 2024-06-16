@@ -8,6 +8,7 @@ type ArticleType = {
     title:              string;
     description:        string;
     h1?:                string;
+    img:                string;
     bodyGpt?:           string;
     titleGpt?:          string;
     descriptionGpt?:    string;
@@ -16,6 +17,9 @@ type ArticleType = {
     genarateGpt:        number;   
     categoryPublishSite:Number;   
     userPublishSite:    Number;   
+    lastMod:            Date;   
+    publishDate:        Date;   
+    [key: string]:      any;
 }
 
 interface IArticle extends Document, Omit<ArticleType, '_id'> {}
@@ -54,7 +58,11 @@ const ArticleSchema   = new Schema({
     h1: { 
         type:       String, 
         required:   true,        
-    }, 
+    },      
+    img: { 
+        type:       String, 
+        required:   true,        
+    },      
     bodyGpt: { 
         type:       String, 
         required:   false,        
@@ -83,6 +91,14 @@ const ArticleSchema   = new Schema({
         min:        0, 
         max:        1 
     },
+    lastMod: { 
+        type:       Date, 
+        required:   false,
+    },
+    publishDate: { 
+        type:       Date, 
+        required:   false,
+    },
     categoryPublishSite: { 
         type:       Number, 
         required:   false        
@@ -95,7 +111,7 @@ const ArticleSchema   = new Schema({
 
 ArticleSchema.index({ site: 1, url:1 }, { unique: true });
 ArticleSchema.index({ send: -1 });
-ArticleSchema.index({ generate: -1 });
+ArticleSchema.index({ generate: -1, sitePublication: -1, lastMod:-1 });
 
 const Article:Model<IArticle> = mongoose.models.Article || mongoose.model('Article', ArticleSchema);
 export type {IArticle,ArticleType, ArticleWithIdType, ArticleArrayWithIdType, ArticleArrayType};

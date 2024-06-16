@@ -4,13 +4,13 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import cheerio from 'cheerio';
 import * as fs                              from 'fs';
 import { ReadSitemapSingleNodeResponse, ReadSitemapResponse, UrlNode } from "../interface/SitemapInterface";
-import { ScrapedData } from "../interface/VanityfairInterface";
+import { ScrapedData } from "../interface/ScrapedInterface";
 import Article, { ArticleType, ArticleWithIdType } from "../../database/mongodb/models/Article";
 import SitePublication, { SitePublicationArrayWithIdType, SitePublicationWithIdType } from "../../database/mongodb/models/SitePublication";
 import { writeErrorLog } from "../../services/Log";
 import { download, extractGzip, readFileToServer } from "../../services/File";
 
-type ScrapeWebsiteFunction  = (url: string) => Promise<ScrapedData | null>;
+type ScrapeWebsiteFunction  = (url: string,selectorBody:string, selectorImg:string) => Promise<ScrapedData | null>;
 type ReadSitemapFunction    = (url: string) => Promise<ReadSitemapResponse|null>;
 
 
@@ -35,51 +35,54 @@ class BaseApi {
         return result;
     }
 
-    //Legge una sitemap che contiene la lista di tutte le sotto sitemap 
     protected async readFromListSitemap(siteName: string, scrapeWebsite: ScrapeWebsiteFunction, readSitemapFunction:ReadSitemapFunction) {        
         const results: SiteArrayWithIdType = await this.getSitemapBySite(siteName);
         
-        results.forEach(async (result: SiteWithIdType) => {
-            const sitePublication: SitePublicationWithIdType | null = await this.getSitePublication(result.sitePublication);
-
-            const url = result.url;
-            const sitemap: ReadSitemapSingleNodeResponse = await this.readFirstNodeSitemapFromUrl(url);
-
-            if (sitemap.success === true && sitePublication !== null) {
-                let loc: string = '';
-                let date: Date | null = null;
-                date = new Date();
-
-                if (sitemap.data != undefined) {
-                    date = new Date(sitemap.data.lastmod);
-                    loc = sitemap.data.loc;
+        // Inizializza un array per raccogliere le promesse
+        const promises = [];
+    
+        for (const result of results) {
+            // Aggiungi una promessa all'array senza utilizzare 'await' qui
+            promises.push((async () => {
+                const sitePublication: SitePublicationWithIdType | null = await this.getSitePublication(result.sitePublication);
+    
+                const url = result.url;
+                const sitemap: ReadSitemapSingleNodeResponse = await this.readFirstNodeSitemapFromUrl(url);
+    
+                if (sitemap.success === true && sitePublication !== null) {
+                    let loc: string = '';
+                    let date: Date | null = null;
+                    date = new Date();
+    
+                    console.log(sitemap.data);
+                    if (sitemap.data != undefined) {
+                        date = sitemap.data.lastmod != '' ? new Date(sitemap.data.lastmod) : date;
+                        loc = sitemap.data.loc;
+                    }
+    
+                    const updateData = {
+                        lastMod: date,
+                        lastUrl: loc,
+                        active: 1,
+                    };
+                    
+    
+                    await Site.updateOne({ url: url }, { $set: updateData });
+    
+                    const sitemapDetail: ReadSitemapResponse|null = await readSitemapFunction(loc);
+                    if (sitemapDetail != null && sitemapDetail.data) {
+                        // Logica per inserire l'articolo originale
+                        await this.insertOriginalArticle(result, sitePublication, sitemapDetail, scrapeWebsite);
+                    }
                 }
-
-                const updateData = {
-                    lastMod: new Date(date),
-                    lastUrl: loc,
-                    active: 1,
-                };
-
-                Site.updateOne({ url: url }, { $set: updateData })
-                    .then(async (result) => { 
-                        console.log('Site aggiornato con successo:', url);
-                    })
-                    .catch(async (error:any) => {
-                        await writeErrorLog('Errore durante l\'elaborazione dell\'articolo:');
-                        await writeErrorLog(error);
-                        console.error('Errore durante l\'elaborazione dell\'articolo');
-                    });
-
-
-                const sitemapDetail: ReadSitemapResponse|null = await readSitemapFunction(loc);
-                if (sitemapDetail!= null && sitemapDetail.data) {
-                    console.log('ssssssssi');
-                    this.insertOriginalArticle(result, sitePublication, sitemapDetail, scrapeWebsite);
-                }
-            }
-            // console.log('no import Sitemap Article')                   
-        });
+            })());
+        }
+    
+        // Attendi il completamento di tutte le promesse
+        await Promise.all(promises);
+    
+        console.log("Tutte le operazioni asincrone sono state completate.");
+        process.exit(5);
     }
 
     /**
@@ -179,7 +182,10 @@ class BaseApi {
             // Itero su tutti gli elementi <url>
             urlNodes.each((index, element) => {
                 const locValue = node(element).find('loc').text();
-                const lastmodValue = node(element).find('lastmod').text();
+                let lastmodValue = node(element).find('lastmod').text();                
+                if( lastmodValue == '' ) {
+                    lastmodValue = node(element).find('news\\:publication_date').text()
+                }
 
                 if (index <= 9) {
                     let urlNode: UrlNode = { loc: locValue, lastmod: lastmodValue };
@@ -230,26 +236,32 @@ class BaseApi {
                 if (existArticle === null) {
                     const loc = urlNode.loc;
                     const lastmod = urlNode.lastmod;
-                    const scrapedData: ScrapedData | null = await scrapeWebsite(loc);
+                    const scrapedData: ScrapedData | null = await scrapeWebsite(loc, site.selectorBody, site.selectorImg);
+                
 
                     if (scrapedData
                         && scrapedData.bodyContainerHTML !== undefined
                         && scrapedData.metaTitle !== undefined
                         && scrapedData.metaDescription !== undefined
                         && scrapedData.h1Content !== undefined
+                        && scrapedData.img !== undefined
                     ) {
+                        
                         const articleData: ArticleType = {
-                            site: site._id,
-                            sitePublication: sitePublication._id,
-                            url: urlNode.loc,
-                            body: scrapedData?.bodyContainerHTML,
-                            title: scrapedData?.metaTitle,
-                            description: scrapedData?.metaDescription,
-                            h1: scrapedData?.h1Content,
-                            genarateGpt: 0,
-                            send: 0,
-                            categoryPublishSite: site.categoryPublishSite,
-                            userPublishSite: site.userPublishSite,
+                            site:                   site._id,
+                            sitePublication:        sitePublication._id,
+                            url:                    urlNode.loc,
+                            body:                   scrapedData?.bodyContainerHTML,
+                            title:                  scrapedData?.metaTitle,
+                            description:            scrapedData?.metaDescription,
+                            h1:                     scrapedData?.h1Content,
+                            img:                    scrapedData?.img,
+                            genarateGpt:            0,
+                            send:                   0,
+                            lastMod:                new Date(urlNode.lastmod),
+                            publishDate:            new Date(),
+                            categoryPublishSite:    site.categoryPublishSite,
+                            userPublishSite:        site.userPublishSite,
                         };
 
                         this.insertArticle(articleData);
