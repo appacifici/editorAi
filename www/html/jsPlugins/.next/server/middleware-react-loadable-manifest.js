@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST="{\"../components/Article/Article.tsx -> @ckeditor/ckeditor5-build-classic\":{\"id\":\"../components/Article/Article.tsx -> @ckeditor/ckeditor5-build-classic\",\"files\":[\"static/chunks/node_modules_ckeditor_ckeditor5-build-classic_build_ckeditor_js.js\"]},\"../components/Article/Article.tsx -> @ckeditor/ckeditor5-react\":{\"id\":\"../components/Article/Article.tsx -> @ckeditor/ckeditor5-react\",\"files\":[\"static/chunks/node_modules_ckeditor_ckeditor5-react_dist_index_js.js\"]}}"
