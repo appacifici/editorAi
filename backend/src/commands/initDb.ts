@@ -1,7 +1,7 @@
 import mongoose, { Model }                              from 'mongoose';
 import connectMongoDB                                   from '../database/mongodb/connect';
 import {ISite, SiteSchema, SiteArrayType}               from '../database/mongodb/models/Site';
-import {IArticle, ArticleSchema, ArticleArrayType}      from '../database/mongodb/models/Article';
+import {IArticle, ArticleSchema, ArticleArrayType, ArticleType}      from '../database/mongodb/models/Article';
 import {IImage, ImageWPSchema, ImageArrayType}          from '../database/mongodb/models/ImageWP';
 import {IPromptAi, PromptAiArrayType, PromptAiSchema}   from '../database/mongodb/models/PromptAi';
 import { SitePublicationSchema, ISitePublication, 
@@ -17,278 +17,112 @@ const ImageWP:              Model<IImage>                   = mongoose.model<IIm
 const PromptAi:             Model<IPromptAi>                = mongoose.model<IPromptAi>('PromptAi', PromptAiSchema);
 const Alert:                Model<IAlert>                   = mongoose.model<IAlert>('Alert', AlertSchema);
 
-const sitePublicationToInsert:SitePublicationArrayType = [
-    {   sitePublication:    'cronacalive.it', 
-        tokenUrl:           'https://www.cronacalive.it/wp-json/jwt-auth/v1/token',
-        url:                'https://www.cronacalive.it/wp-json/wp/v2/posts',
-        urlImages:          'https://www.cronacalive.it/wp-json/wp/v2/media',
-        urlCategories:      'https://www.cronacalive.it/wp-json/wp/v2/categories',
-        categories:         null,
-        username:           'Admin',  
-        password:           'dUJ44cXYK5%DtCKBW8B%6xy(',  
-        active:             1,
-        page:               1,
-        cronGenerateAi:     '*/3 * * * *',
-        cronSendToWp:       '*/50 * * * *',
-    },
-    {   sitePublication:    'roma.cronacalive.it', 
-        tokenUrl:           'https://roma.cronacalive.it/wp-json/jwt-auth/v1/token',
-        url:                'https://roma.cronacalive.it/wp-json/wp/v2/posts',
-        urlImages:          'https://roma.cronacalive.it/wp-json/wp/v2/media',
-        urlCategories:      'https://roma.cronacalive.it/wp-json/wp/v2/categories',
-        categories:         null,
-        username:           'Administrator',  
-        password:           'rl5Bmi&$9VXAVyEZJv',  
-        active:             1,
-        page:               1,
-        cronGenerateAi:     '*/3 * * * *',
-        cronSendToWp:       '*/50 * * * *',
-    },
-    {   sitePublication:    'bluedizioni.it', 
-        tokenUrl:           'https://www.bluedizioni.it/wp-json/jwt-auth/v1/token',
-        url:                'https://www.bluedizioni.it/wp-json/wp/v2/posts',
-        urlImages:          'https://www.bluedizioni.it/wp-json/wp/v2/media',
-        urlCategories:      'https://www.bluedizioni.it/wp-json/wp/v2/categories',
-        categories:         null,
-        username:           'Administrator',  
-        password:           'XHGa$dciwnRMIJbQGl',  
-        active:             1,
-        page:               1,
-        cronGenerateAi:     '*/4 * * * *',
-        cronSendToWp:       '*/50 * * * *',
-    },
-];
+const insert = async () => {
+    const sitePublicationToInsert:SitePublicationArrayType = [
+        {   sitePublication:    'acquistigiusti.it', 
+            tokenUrl:           '...',
+            url:                '...',
+            urlImages:          '...',
+            urlCategories:      'http://80.181.225.51:8050/api/getSections',
+            categories:         null,
+            username:           '',  
+            password:           '',  
+            active:             1,
+            page:               1,
+            cronGenerateAi:     '*/3 * * * *',
+            cronSendToWp:       '*/50 * * * *',
+        }
+    ];
 
-SitePublication.insertMany(sitePublicationToInsert)
-.then((docs) => {
-    console.log('SitePublication inserted successfully:', docs);
-})
-.catch((err) => {
-    console.error('Error inserting SitePublication:', err);
-});
+    await SitePublication.insertMany(sitePublicationToInsert)
+    .then((docs) => {
+        console.log('SitePublication inserted successfully:', docs);
+    })
+    .catch((err) => {
+        console.error('Error inserting SitePublication:', err);
+    });
 
 
-const promptAiToInsert:PromptAiArrayType = [
-    {   sitePublication:    'roma.cronacalive.it', 
-        calls:              [{"key":"getStructure","saveFunction":"createDataSave","saveTo":"data","saveKey":"getStructure","complete":0,"msgUser":{"type":"inJson","user":[{"message":"Rispondi in formato JSON, al titolo delimitato da virgolette triple: [plachehorderContent]"}]}},{"key":"getArticle","saveFunction":"updateSchemaArticle","saveTo":"bodyGpt","saveKey":"","complete":0,"msgUser":{"type":"readStructureField","field":"data","readKey":"getStructure","message":"Scrivi il capitolo: [plachehorderContent]"}}],
-        steps:              [{"getStructure":{"messages":[{"role":"system","content":"Sei un utile assistente pensato per produrre JSON, esperto nella generazione articoli giornalistici professionali. Il tuo obiettivo è generare la struttura di una guida che risponda a tutte le informazioni necessarie. Ti verranno forniti degli articoli di esempio per i quali dovrai generare la struttura dei capitoli (h2) del testo da scrivere. Il testo generato deve essere molto esauriente e contenere tutte le informazioni utili. Massimo 3 capitoli. Rispondi con un JSON con questo formato:[{\"chapters\": {\"toGenerate\":\"true\",\"type\": \"h1/h2/h3\",\"value\": \"string\"}}]"}],"model":"gpt-3.5-turbo-1106","temperature":0.6,"top_p":0.9,"response_format":{"type":"json_object"}}},{"getArticle":{"messages":[{"role":"system","content":"Ruolo: Sei un utile giornalista professinista. Obiettivo: Scrivi un capitolo di un articolo. Stile di scrittura: professionale. Tono: professionale. Lingua: italiano. Lunghezza 200 parole. Ti verra fornito il testo da elaborare tra triplo apice"}],"model":"gpt-3.5-turbo-1106","temperature":0.6,"top_p":0.9}}],
-        data:               [],
-        numStep:            1,  
-        complete:           0,
-        typePrompt:         1
-    },
-    {   sitePublication:    'roma.cronacalive.it', 
-        calls:              [{"key":"getArticle","saveFunction":"writeBodyArticle","saveTo":"bodyGpt","saveKey":"","complete":0,"msgUser":{"type":"inJson","user":[{"message":"<article>[plachehorderContent]</article>"}]}}],
-        steps:              [{"getArticle":{"messages":[{"role":"system","content":"Ruolo: Sei un utile giornalista professinista. Obiettivo: Riscrivi un articolo. Stile di scrittura: professionale. Tono: professionale. Lingua: italiano. Lunghezza 500 parole. Struttura: {\"H1\":{\"content\":\"Introduzione di 100 parole\"},\"H2\":[{\"content\":\"Testo H2 1 (max 100 parole)\"},{\"content\":\"Testo H2 2 (max 100 parole)\"},{\"content\":\"Testo H2 3 (max 100 parole)\"}]}. Ti verrà fornito un articolo (delimitato con tag XML) sullo stesso argomento. Devi scrivere un articolo cambiando più che puoi l'originale"}],"model":"gpt-3.5-turbo-1106","temperature":0.6,"top_p":0.9}}],
-        data:               [],
-        numStep:            1,  
-        complete:           0,
-        typePrompt:         1
-    },
-    {   sitePublication:    'roma.cronacalive.it', 
-        calls:              [{"key":"getArticle","saveFunction":"writeBodyArticle","saveTo":"bodyGpt","saveKey":"","complete":0,"msgUser":{"type":"inJson","user":[{"message":"<article>[plachehorderContent]</article>"}]}}],
-        steps:              [{"getArticle":{"messages":[{"role":"system","content":"Ruolo: Sei un utile giornalista professinista. Obiettivo: Riscrivi un articolo cambiando più che puoi l'originale e apliando il contenuto. Stile di scrittura: professionale. Tono: professionale. Lingua: italiano. Lunghezza: Minimo 500 parole. Struttura:<articolo><h1>Titolo dell'articolo</h1><p minLength=\"50 words\" maxLength=\"100 words\">Sottotitolo dell'articolo</p><h2 minLength=\"50 words\" maxLength=\"150 words\">Primo paragrafo dell'articolo</h2><h2 minLength=\"50 words\" maxLength=\"150 words\">Secondo paragrafo dell'articolo.</h2><h2 minLength=\"50 words\" maxLength=\"150 words\">Terzo paragrafo dell'articolo.</h2></articolo>. Ti verrà fornito un articolo (delimitato con tag XML) sullo stesso argomento."}],"model":"gpt-3.5-turbo-1106","temperature":0.6,"top_p":0.9}}],
-        data:               [],
-        numStep:            1,  
-        complete:           0,
-        typePrompt:         1
-    },
-    {   sitePublication:    'roma.cronacalive.it', 
-        calls:              [{"key":"getArticle","saveFunction":"writeTotalArticle","saveTo":"bodyGpt","saveKey":"","complete":0,"msgUser":{"type":"inJson","user":[{"message":"<article>[plachehorderContent]</article>"}]}}],
-        steps:              [{"getArticle":{"messages":[{"role":"system","content":"Ruolo: Sei un utile giornalista professinista. Obiettivo: Riscrivi un articolo cambiando più che puoi l'originale e apliando il contenuto. Stile di scrittura: professionale. Tono: professionale. Lingua: italiano. Lunghezza: Minimo 500 parole. Struttura:<root><meta><metaTitle maxLength=\"80 characters\">Meta title dell'articolo</metaTitle><metaDescription maxLength=\"130 characters\">Meta title dell'articolo</metaDescription></meta><h1>Titolo dell'articolo</h1><article><p minLength=\"100 words\" maxLength=\"150 words\">Introduzione dell'articolo</p><h2 minLength=\"100 words\" maxLength=\"200 words\">Primo paragrafo dell'articolo</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Secondo paragrafo dell'articolo.</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Terzo paragrafo dell'articolo.</h2></article></root>. Ti verrà fornito un articolo (delimitato con tag XML) sullo stesso argomento."}],"model":"gpt-4-0613","temperature":0.6,"top_p":0.9}}],                            
-        data:               [],
-        numStep:            1,  
-        complete:           0,
-        typePrompt:         1
-    },
-    {   sitePublication:    'roma.cronacalive.it', 
-        calls:              [{"key":"scegliCategoriaPubblicazione","saveFunction":"readWriteDimanycSchema","readTo":[{"schema":"SitePubblication","field":"categories"},{"schema":"Article","field":"title"}],"saveTo":[{"schema":"Article","field":"categoryPublishSite","responseField":"id"}],"saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"readWriteDimanycSchema","replace":[{"schema":"SitePubblication","field":"categories"},{"schema":"Article","field":"title"}],"user":[{"message":"Struttura:[#categories#]  <article>[#title#]<article>"}]}},{"key":"getArticle","saveFunction":"writeTotalArticle","readTo":"body","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":true,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"inJson","user":[{"message":"<article>[plachehorderContent]</article>"}]}},{"key":"getConcettiChiave","saveFunction":"createDataSave","readTo":"bodyGpt","saveTo":"data","saveKey":"getConcettiChiave","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"inJson","user":[{"message":"<article>[plachehorderContent]</article>"}]}},{"key":"setConcettiChiave","saveFunction":"writeBodyArticle","readTo":"bodyGpt","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"readStructureFieldAndArticle","field":"data","readKey":"getConcettiChiave","message":"Ecco la lista delle frasi e parole in Json: [plachehorderContent]"}},{"key":"correggiH2","saveFunction":"writeBodyArticle","readTo":"bodyGpt","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"inJson","user":[{"message":" [plachehorderContent]"}]}},{"key":"getAllCallsCompelte","saveFunction":"callsCompete","readTo":"bodyGpt","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"","user":[{"message":""}]}}],
-        steps:              [{"getArticle":{"messages":[{"role":"system","content":"Ruolo: Sei un utile giornalista professinista. Obiettivo: Riscrivi un articolo cambiando più che puoi l'originale e apliando il contenuto. Stile di scrittura: colloquiale. Tono: colloquiale. Lingua: italiano. Lunghezza: Minimo 500 parole. Non usare un linguaggio a volte è troppo forbito - Non ripetere i concetti da espressi - Non dare le cose per scontate ma aggiungi dettagli e indormazioni specifiche ricercando anche sul web l'informazione. Struttura:<root><meta><metaTitle maxLength=\"80 characters\">Meta title dell'articolo in formato umano non in camecase</metaTitle><metaDescription maxLength=\"130 characters\">Meta title dell'articolo in formato umano non in came</metaDescription></meta><h1>Titolo dell'articolo in formato umano non in came</h1><article><p minLength=\"100 words\" maxLength=\"150 words\">Introduzione dell'articolo</p><h2 minLength=\"100 words\" maxLength=\"200 words\">Primo paragrafo dell'articolo</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Secondo paragrafo dell'articolo.</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Terzo paragrafo dell'articolo.</h2></article></root>. Ti verrà fornito un articolo (delimitato con tag XML) sullo stesso argomento."}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"getConcettiChiave":{"messages":[{"role":"system","content":"Ruolo: sei un assistente esperto giornalista copriwriter. Obbietti: Identifica le parole e frasi che potrebbero essere messe in grassetto o in corsivo, per enfatizzare concetti chiave o elementi salienti del testo. Lunghezza: Massimo 5 parole. Regola 1. Non utilizzare più di una volta la stessa parola o frase. Struttura: [{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"bold\"}},{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"bold\"}}]. Ti fornisco il testo in un tag <xml>."}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"setConcettiChiave":{"messages":[{"role":"system","content":"Ruolo: Sei un utile editor di testo. Obbiettivi: Modificare il testo, inserendo le frasi o parole nei tag di enfatizzazione <strong></stron> e <italic></italic>. Regola 1. Non utilizzare più di una volta la stessa parola o frase. Ti verra fornito il testo nel tag xml <article>. Ti verra fornita la lista delle frasi e parole in Json: [{\"frase\":{\"Testo\":\"Frase del testo da evidenziare\",\"Tipo\":\"<strong></srtrong>\"}},{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"<italic></italic>\"}}]"}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"correggiH2":{"messages":[{"role":"system","content":"Scopo: Trasforma il testo nei tag<h2> in formato classico italiano non in camelcase. Azione: <h2>testo in formato giornalistico, non in camelcase</h2>.  Struttura testo: <article><p minLength=\"100 words\" maxLength=\"150 words\">Introduzione dell'articolo</p><h2 minLength=\"100 words\" maxLength=\"200 words\">Primo paragrafo dell'articolo</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Secondo paragrafo dell'articolo.</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Terzo paragrafo dell'articolo.</h2></article> Regola 1. Ti verra fornito il testo nel tag xml <article>"}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"scegliCategoriaPubblicazione":{"messages":[{"role":"system","content":"Ruolo: Sei un esperto di contenuti per siti web. Obbiettivo: Scegliere la categoria in cui pubblicare un articolo. Ti verra fornita la lista delle categorie in formato JSON: [{\"id\":int,\"link\":\"string/\",\"name\":\"string\",\"slug\":\"string\"},{\"id\":int,\"link\":\"string/\",\"name\":\"string\",\"slug\":\"string\"},...]. E ti verrà fornito il titolo dell'articolo nel tag xml <article>. Output: {\"id\":int}"}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"getAllCallsCompelte":{"messages":[{"role":"system","content":"Ruolo: FAKE CALL"}],"model":"gpt-3.5-turbo-1106","temperature":0.6,"top_p":0.9}}],
-        data:               [],
-        numStep:            1,  
-        complete:           0,
-        typePrompt:         1,
-        title:              'RomaCronacalive_Official'
-    },
-    {   sitePublication:    'bluedizioni.it', 
-        calls:              [{"key":"scegliCategoriaPubblicazione","saveFunction":"readWriteDimanycSchema","readTo":[{"schema":"SitePubblication","field":"categories"},{"schema":"Article","field":"title"}],"saveTo":[{"schema":"Article","field":"categoryPublishSite","responseField":"id"}],"saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"readWriteDimanycSchema","replace":[{"schema":"SitePubblication","field":"categories"},{"schema":"Article","field":"title"}],"user":[{"message":"Struttura:[#categories#]  <article>[#title#]<article>"}]}},{"key":"getArticle","saveFunction":"writeTotalArticle","readTo":"url","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":true,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"inJson","user":[{"message":"<url>[plachehorderContent]</url>"}]}},{"key":"getConcettiChiave","saveFunction":"createDataSave","readTo":"bodyGpt","saveTo":"data","saveKey":"getConcettiChiave","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"inJson","user":[{"message":"<article>[plachehorderContent]</article>"}]}},{"key":"setConcettiChiave","saveFunction":"writeBodyArticle","readTo":"bodyGpt","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"readStructureFieldAndArticle","field":"data","readKey":"getConcettiChiave","message":"Ecco la lista delle frasi e parole in Json: [plachehorderContent]"}},{"key":"correggiH2","saveFunction":"writeBodyArticle","readTo":"bodyGpt","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"inJson","user":[{"message":" [plachehorderContent]"}]}},{"key":"getAllCallsCompelte","saveFunction":"callsCompete","readTo":"bodyGpt","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"","user":[{"message":""}]}}],
-        steps:              [{"getArticle":{"messages":[{"role":"system","content":"Ruolo: Sei un utile giornalista professinista. Obiettivo: Riscrivi un articolo cambiando più che puoi l'originale e apliando il contenuto. Stile di scrittura: colloquiale. Tono: colloquiale. Lingua: italiano. Lunghezza: Minimo 500 parole. Non usare un linguaggio a volte è troppo forbito - Non ripetere i concetti da espressi - Non dare le cose per scontate ma aggiungi dettagli e indormazioni specifiche ricercando anche sul web l'informazione. Struttura:<root><meta><metaTitle maxLength=\"80 characters\">Meta title dell'articolo in formato umano non in camecase</metaTitle><metaDescription maxLength=\"130 characters\">Meta title dell'articolo in formato umano non in came</metaDescription></meta><h1>Titolo dell'articolo in formato umano non in came</h1><article><p minLength=\"100 words\" maxLength=\"150 words\">Introduzione dell'articolo</p><h2 minLength=\"100 words\" maxLength=\"200 words\">Primo paragrafo dell'articolo</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Secondo paragrafo dell'articolo.</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Terzo paragrafo dell'articolo.</h2></article></root>. Ti verrà la url dell articolo fonte (delimitato con tag XML) sullo stesso argomento."}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"getConcettiChiave":{"messages":[{"role":"system","content":"Ruolo: sei un assistente esperto giornalista copriwriter. Obbietti: Identifica le parole e frasi che potrebbero essere messe in grassetto o in corsivo, per enfatizzare concetti chiave o elementi salienti del testo. Lunghezza: Massimo 5 parole. Regola 1. Non utilizzare più di una volta la stessa parola o frase. Struttura: [{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"bold\"}},{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"bold\"}}]. Ti fornisco il testo in un tag <xml>."}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"setConcettiChiave":{"messages":[{"role":"system","content":"Ruolo: Sei un utile editor di testo. Obbiettivi: Modificare il testo, inserendo le frasi o parole nei tag di enfatizzazione <strong></stron> e <italic></italic>. Regola 1. Non utilizzare più di una volta la stessa parola o frase. Ti verra fornito il testo nel tag xml <article>. Ti verra fornita la lista delle frasi e parole in Json: [{\"frase\":{\"Testo\":\"Frase del testo da evidenziare\",\"Tipo\":\"<strong></srtrong>\"}},{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"<italic></italic>\"}}]"}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"correggiH2":{"messages":[{"role":"system","content":"Scopo: Trasforma il testo nei tag<h2> in formato classico italiano non in camelcase. Azione: <h2>testo in formato giornalistico, non in camelcase</h2>.  Struttura testo: <article><p minLength=\"100 words\" maxLength=\"150 words\">Introduzione dell'articolo</p><h2 minLength=\"100 words\" maxLength=\"200 words\">Primo paragrafo dell'articolo</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Secondo paragrafo dell'articolo.</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Terzo paragrafo dell'articolo.</h2></article> Regola 1. Ti verra fornito il testo nel tag xml <article>"}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"scegliCategoriaPubblicazione":{"messages":[{"role":"system","content":"Ruolo: Sei un esperto di contenuti per siti web. Obbiettivo: Scegliere la categoria in cui pubblicare un articolo. Ti verra fornita la lista delle categorie in formato JSON: [{\"id\":int,\"link\":\"string/\",\"name\":\"string\",\"slug\":\"string\"},{\"id\":int,\"link\":\"string/\",\"name\":\"string\",\"slug\":\"string\"},...]. E ti verrà fornito il titolo dell'articolo nel tag xml <article>. Output: {\"id\":int}"}],"model":"gpt-4","temperature":0.6,"top_p":0.9}},{"getAllCallsCompelte":{"messages":[{"role":"system","content":"Ruolo: FAKE CALL"}],"model":"gpt-3.5-turbo-1106","temperature":0.6,"top_p":0.9}}],
-        data:               [],
-        numStep:            1,  
-        complete:           0,
-        typePrompt:         1,
-        title:              'Bluedizioni_Official'
+    const promptAiToInsert:PromptAiArrayType = [
+        {   sitePublication:    'roma.cronacalive.it', 
+            calls:              [{"key":"scegliCategoriaPubblicazione","saveFunction":"readWriteDimanycSchema","readTo":[{"schema":"SitePubblication","field":"categories"},{"schema":"Article","field":"title"}],"saveTo":[{"schema":"Article","field":"categoryPublishSite"}],"saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":1,"msgUser":{"type":"readWriteDimanycSchema","replace":[{"schema":"SitePubblication","field":"categories"},{"schema":"Article","field":"title"}],"user":[{"message":"Struttura:[#categories#]  <article>[#title#]<article>"}]}},{"key":"getArticle","saveFunction":"writeTotalArticle","readTo":"title","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":true,"lastBodyAppend":"false","complete":1,"msgUser":{"type":"inJson","user":[{"message":"<title>[plachehorderContent]</title>"}]}},{"key":"getConcettiChiave","saveFunction":"createDataSave","readTo":"bodyGpt","saveTo":"data","saveKey":"getConcettiChiave","removeHtmlTags":false,"lastBodyAppend":"false","complete":1,"msgUser":{"type":"inJson","user":[{"message":"<article>[plachehorderContent]</article>"}]}},{"key":"setConcettiChiave","saveFunction":"writeBodyArticle","readTo":"bodyGpt","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":1,"msgUser":{"type":"readStructureFieldAndArticle","field":"data","readKey":"getConcettiChiave","message":"Ecco la lista delle frasi e parole in Json: [plachehorderContent]"}},{"key":"getBulletPoints","saveFunction":"readWriteDimanycSchema","readTo":[{"schema":"Article","field":"bodyGpt"}],"saveTo":[{"schema":"Article","field":"bulletPoints","responseField":"bulletList"}],"saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":1,"msgUser":{"type":"readWriteDimanycSchema","replace":[{"schema":"Article","field":"bodyGpt"}],"user":[{"message":"<article>[#bodyGpt#]<article>"}]}},{"key":"getTecnicalInfo","saveFunction":"readWriteDimanycSchema","readTo":[{"schema":"Article","field":"titleGpt"}],"saveTo":[{"schema":"Article","field":"tecnicalInfo","responseField":"tecnicalGpt"}],"saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":1,"msgUser":{"type":"readWriteDimanycSchema","replaceSystem":{"field":"output","function":"getTecnicalTemplateCmsAdmin"},"replace":[{"schema":"Article","field":"titleGpt"}],"user":[{"message":"<title>[#titleGpt#]<title>"}]}},{"key":"getAllCallsCompelte","saveFunction":"callsCompete","readTo":"bodyGpt","saveTo":"bodyGpt","saveKey":"","removeHtmlTags":false,"lastBodyAppend":"false","complete":0,"msgUser":{"type":"","user":[{"message":""}]}}],
+            steps:              [{"scegliCategoriaPubblicazione":{"messages":[{"role":"system","content":"Ruolo: Sei un esperto di contenuti per siti web. Obbiettivo: Scegliere la categoria in cui pubblicare un articolo. Ti verra fornita la lista delle categorie in formato JSON: {\"1\":{\"id\":\"int\",\"name\":\"string\",\"subcategory\":{\"2\":{\"id\":\"int\",\"name\":\"string\",\"typology\":{\"int\":{\"id\":\"int\",\"name\":\"string\"},\"int\":{\"id\":\"int\",\"name\":\"string\"},...}},\"1\":{\"id\":\"int\",\"name\":\"string\",\"typology\":{\"int\":{\"id\":\"int\",\"name\":\"string\"},\"int\":{\"id\":\"int\",\"name\":\"string\"},...}},...}},\"2\":{\"id\":\"int\",\"name\":\"string\",\"subcategory\":{\"5\":{\"id\":\"int\",\"name\":\"string\",\"typology\":{\"int\":{\"id\":\"int\",\"name\":\"string\"},\"int\":{\"id\":\"int\",\"name\":\"string\"},...}},\"7\":{\"id\":\"int\",\"name\":\"string\",\"typology\":{\"int\":{\"id\":\"int\",\"name\":\"string\"},\"int\":{\"id\":\"int\",\"name\":\"string\"},...}},...}},\"5\":{\"id\":\"int\",\"name\":\"string\",\"subcategory\":{\"int\":{\"id\":\"int\",\"name\":\"string\",\"typology\":{\"int\":{\"id\":\"int\",\"name\":\"string\"},...}},...}}}. E ti verrà fornito il titolo dell'articolo nel tag xml <article>. Output: {\"category\":{\"id\":\"int|null\"},\"subcategory\":{\"id\":\"int|null\"},\"typology\":{\"id\":\"int|null\"}}"}],"model":"gpt-3.5-turbo","temperature":0.6,"top_p":0.9}},{"getArticle":{"messages":[{"role":"system","content":"Ruolo: Sei un copriwriter professionista con un'esperienza di 20 anni nel settore di recensioni di prodotti. Obbiettivo: Partendo dalla url della fonte, scrivi totalmente una descrizione del prodotto in 500 parole. Regole: puoi utilizzare elenchi puntati nel test descrizione se necessario. Struttura risposta:<root><meta><metaTitle maxLength=\"80 characters\">Meta title dell'articolo in formato umano non in camecase</metaTitle><metaDescription maxLength=\"130 characters\">Meta description dell'articolo in formato umano non in came</metaDescription></meta><h1>Titolo dell'articolo in formato umano non in came</h1><article><p minLength=\"100 words\" maxLength=\"500 words\">Descrizione articoli in vari paragrafi</p></article></root>. Ti verrà fornito il titolo fonte (delimitato con tag XML <title>) sullo stesso argomento."}],"model":"gpt-3.5-turbo","temperature":0.6,"top_p":0.9}},{"getConcettiChiave":{"messages":[{"role":"system","content":"Ruolo: sei un assistente esperto giornalista copriwriter. Obbietti: Identifica le parole e frasi che potrebbero essere messe in grassetto o in corsivo, per enfatizzare concetti chiave o elementi salienti del testo. Lunghezza: Massimo 5 parole. Regola 1. Non utilizzare più di una volta la stessa parola o frase. Struttura: [{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"bold\"}},{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"bold\"}}]. Ti fornisco il testo in un tag <xml>."}],"model":"gpt-3.5-turbo","temperature":0.6,"top_p":0.9}},{"setConcettiChiave":{"messages":[{"role":"system","content":"Ruolo: Sei un utile editor di testo. Obbiettivi: Modificare il testo, inserendo le frasi o parole nei tag di enfatizzazione <strong></stron> e <italic></italic>. Regola 1. Non utilizzare più di una volta la stessa parola o frase. Ti verra fornito il testo nel tag xml <article>. Ti verra fornita la lista delle frasi e parole in Json: [{\"frase\":{\"Testo\":\"Frase del testo da evidenziare\",\"Tipo\":\"<strong></srtrong>\"}},{\"frase\":{\"Testo\":\"Frase del testo senza cambiarla\",\"Tipo\":\"<italic></italic>\"}}]"}],"model":"gpt-3.5-turbo","temperature":0.6,"top_p":0.9}},{"correggiH2":{"messages":[{"role":"system","content":"Scopo: Trasforma il testo nei tag<h2> in formato classico italiano non in camelcase. Azione: <h2>testo in formato giornalistico, non in camelcase</h2>.  Struttura testo: <article><p minLength=\"100 words\" maxLength=\"150 words\">Introduzione dell'articolo</p><h2 minLength=\"100 words\" maxLength=\"200 words\">Primo paragrafo dell'articolo</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Secondo paragrafo dell'articolo.</h2><h2 minLength=\"100 words\" maxLength=\"200 words\">Terzo paragrafo dell'articolo.</h2></article> Regola 1. Ti verra fornito il testo nel tag xml <article>"}],"model":"gpt-3.5-turbo","temperature":0.6,"top_p":0.9}},{"getBulletPoints":{"messages":[{"role":"system","content":"Ruolo: Sei un esperto di contenuti per siti web. Obbiettivo: Genera massimo 5 bullet point che evidenziano le caratteristiche e i vantaggi principali di un prodotto. Regole: Ogni bullet point deve essere di massimo 3 parole. Separali con ';'. Non usare le congiunzioni grammaticali. Ti verra fornita il testo del prodotto nel tag xml <article>. Output: {\"bulletList\":string}"}],"model":"gpt-3.5-turbo","temperature":0.6,"top_p":0.9}},{"getTecnicalInfo":{"messages":[{"role":"system","content":"Ruolo: Sei un esperto di contenuti per siti web. Obbiettivo: Genera la scheda tecnica con le caratteristiche tecniche di un prodotto. Ti verra fornita il titolo del prodotto nel tag xml <title>. Output: {\"tecnicalGpt\":{\"Informazioni Generali\":{\"Produttore\":\"[Nome del produttore]\",\"Modello\":\"[Nome o numero del modello]\",\"Tipologia\":\"[Tipo di prodotto, es. Robot aspirapolvere]\"},\"Dimensioni e Peso\":{\"Diametro\":\"[Diametro in cm]\",\"Altezza\":\"[Altezza in cm]\",\"Peso\":\"[Peso in kg]\"},\"Prestazioni\":{\"Capacità del contenitore della polvere\":\"[Capacità in litri]\",\"Potenza di aspirazione\":\"[Valore di potenza di aspirazione, es. 10 volte rispetto a un modello precedente]\",\"Sistema di pulizia\":\"[Descrizione del sistema di pulizia, es. sistema a 3 fasi]\"},\"Sensori e Navigazione\":{\"Navigazione\":\"[Tipo di navigazione, es. iAdapt 3.0 con tecnologia vSLAM]\",\"Sensori\":\"[Tipi di sensori, es. Sensori per il rilevamento dello sporco, sensori di dislivello]\",\"Mappatura\":\"[Capacità di mappatura, es. Smart Mapping]\"},\"Connettività e Controllo\":{\"Connettività\":\"[Tipo di connettività, es. Wi-Fi]\",\"Compatibilità\":\"[Compatibilità con assistenti vocali, es. Amazon Alexa, Google Assistant]\",\"App\":\"[Nome dell'applicazione per il controllo, es. iRobot HOME app]\"},\"Batteria\":{\"Tipo di batteria\":\"[Tipo di batteria, es. Ioni di litio]\",\"Durata\":\"[Durata della batteria in minuti]\",\"Tempo di ricarica\":\"[Tempo di ricarica in ore]\",\"Funzione di ripresa della pulizia\":\"[Descrizione della funzione, es. Riprende la pulizia dal punto in cui è stata interrotta]\"},\"Caratteristiche Aggiuntive\":{\"Base di ricarica\":\"[Descrizione della base di ricarica, es. Include base di ricarica standard]\",\"Modalità di pulizia\":\"[Modalità di pulizia disponibili, es. Auto, Spot]\",\"Riconoscimento automatico del tipo di pavimento\":\"[Sì/No]\",\"Filtro\":\"[Tipo di filtro, es. Alta efficienza]\"},\"Manutenzione\":{\"Accessori inclusi\":\"[Elenco degli accessori inclusi, es. 1 filtro extra, 1 spazzola laterale extra]\",\"Manutenzione regolare\":\"[Descrizione della manutenzione regolare, es. Pulizia delle spazzole, sostituzione del filtro]\"},\"Garanzia\":{\"Garanzia del produttore\":\"[Durata della garanzia, es. 2 anni sul robot, 1 anno sulla batteria]\"}}}"}],"model":"gpt-3.5-turbo","temperature":0.6,"top_p":0.9}},{"getAllCallsCompelte":{"messages":[{"role":"system","content":"Ruolo: FAKE CALL"}],"model":"gpt-3.5-turbo-1106","temperature":0.6,"top_p":0.9}}],
+            data:               [],
+            numStep:            1,  
+            complete:           0,
+            typePrompt:         1
+        }
+    ];
+
+
+    await PromptAi.insertMany(promptAiToInsert)
+    .then((docs) => {
+        console.log('PromptAi inserted successfully:', docs);
+    })
+    .catch((err) => {
+        console.error('Error inserting PromptAi:', err);
+    });
+
+    const sitesToInsert:SiteArrayType = [
+        { 
+            site:                   'vanityfair.it', 
+            sitePublication:        'cronacalive.it', 
+            url:                    'https://www.vanityfair.it/sitemap.xml',
+            active:                 1, 
+            format:                 'sitemap',
+            categoryPublishSite:    1,
+            userPublishSite:        '3',
+            selectorBody:           'cheerioLoad(".body__container").html() || ""',
+            selectorImg:            'cheerioLoad("img.responsive-image__image").first().attr("src")',
+            cronImportSitemap:      '10 * * * *'
+        }
+    ];
+
+    await Site.insertMany(sitesToInsert)
+    .then((docs) => {
+        console.log('Sites inserted successfully:');
+        
+    })
+    .catch((err) => {
+        console.error('Error inserting Sites:', err);
+        
+    });
+
+
+    const site = await Site.findOne({ site:'vanityfair.it'});
+    console.log(site);
+    const sitePublication = await SitePublication.findOne({sitePublication:'acquistigiusti.it'});
+    console.log(sitePublication);
+        if( site !== null && sitePublication !== null ) {
+
+        const articleData: ArticleArrayType = [{
+            site:                   site._id,
+            sitePublication:        sitePublication._id,
+            url:                    'https://amzn.to/3xviuSM',
+            body:                   "IRobot ha oltre 30 anni di esperienza nel mondo della robotica, con oltre 30 milioni di robot domestici venduti in tutto il mondo Grazie alla sua tecnologia di navigazione, l'i7 può catturare e rimuovere lo sporco dove vuoi, quando vuoi; e altrettanto importante, può evitare di andare dove non vuoi che vada La mappatura Cutting-Edge e la navigazione intelligente consentono di inviare l'i7 verso lo sporco quando serve, con un semplice comando vocale; funziona con i dispositivi Google Assistant e Alexa Polvere sottile e grossi detriti: aspira di tutto con il sistema a 3 fasi basato su doppie spazzole in gomma multi-superficie e unâ€aspirazione 10 volte più potente della Serie 600 Impara dalle tue abitudini e ascolta la tua voce, dandoti suggerimenti e preoccupandosi anche di ciò che a te potrebbe sfuggire, come la pulizia extra durante la stagione delle allergie Con la navigazione vSLAM, Roomba i7i7 mappa la casa per seguire percorsi ordinati e pulire già al primo passaggio, se la batteria si scarica, si ricarica da solo e riprende da dove aveva interrotto Preparati a goderti la serenità di una casa pulita e ordinata Roomba i7 sfrutta la tecnologia intelligente iRobot OS per memorizzare le tue routine e pulire in funzione del tuo stile di vita",
+            title:                  'iRobot Roomba I7156 Robot Aspirapolvere, Memorizza La Planimetria Della Tua Casa, Adatto Per Peli Di Animali Domestici, Spazzole In Gomma, Potente Aspirazione, Wi-Fi, Programmabile Con App, Argento',
+            description:            'sss',
+            h1:                     'ss',
+            img:                    'https://m.media-amazon.com/images/I/8122sjGdh3L._AC_SL1500_.jpg',
+            genarateGpt:            0,
+            send:                   0,
+            lastMod:                new Date(),
+            publishDate:            new Date(),
+            categoryPublishSite:    '2',
+            userPublishSite:        '2',
+        }];
+
+        Article.insertMany(articleData)
+            .then((docs) => {
+                console.log('articleData inserted successfully:', docs);
+                process.exit(1);
+            })
+            .catch((err) => {
+                console.error('Error inserting articleData:', err);
+                process.exit(0);
+            });
     }
-];
 
+}
 
-PromptAi.insertMany(promptAiToInsert)
-.then((docs) => {
-    console.log('PromptAi inserted successfully:', docs);
-})
-.catch((err) => {
-    console.error('Error inserting PromptAi:', err);
-});
-
-const sitesToInsert:SiteArrayType = [
-    { 
-        site:                   'vanityfair.it', 
-        sitePublication:        'cronacalive.it', 
-        url:                    'https://www.vanityfair.it/sitemap.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        3,
-        selectorBody:           'cheerioLoad(".body__container").html() || ""',
-        selectorImg:            'cheerioLoad("img.responsive-image__image").first().attr("src")',
-        cronImportSitemap:      '10 * * * *'
-    },
-    { 
-        site:                   'ilcorrieredellacitta.com', 
-        sitePublication:        'roma.cronacalive.it', 
-        url:                    'https://www.ilcorrieredellacitta.com/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        3,
-        selectorBody:           'cheerioLoad(".dynamic-entry-content").html() || ""',
-        selectorImg:            'cheerioLoad("img.wp-post-image").first().attr("src")',
-        cronImportSitemap:      '12 * * * *'
-    },
-    { 
-        site:                   'romatoday.it', 
-        sitePublication:        'roma.cronacalive.it', 
-        url:                    'https://www.romatoday.it/sitemaps/sitemap_news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        3,
-        selectorBody:           'cheerioLoad(".l-entry__body").html() || ""',
-        selectorImg:            'cheerioLoad("img.u-size-responsive-view").first().attr("src")',
-        cronImportSitemap:      '14 * * * *'
-    },
-    { 
-        site:                   'galleriaborghese.it', 
-        sitePublication:        'bluedizioni.it', 
-        url:                    'https://www.galleriaborghese.it/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    3,
-        userPublishSite:        2,
-        selectorBody:           'cheerioLoad("div.inside-article").html() || ""',
-        selectorImg:            'cheerioLoad("img[class*=\'wp-image\']").first().attr("src")',
-        cronImportSitemap:      '16 * * * *'
-    },
-    { 
-        site:                   'blueshouse.it', 
-        sitePublication:        'bluedizioni.it', 
-        url:                    'https://www.blueshouse.it/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        3,
-        selectorBody:           'cheerioLoad("div.inside-article").html() || ""',
-        selectorImg:            'cheerioLoad("img[class*=\'wp-image\']").first().attr("src")',
-        cronImportSitemap:      '18 * * * *'
-    },
-    { 
-        site:                   'arabonormannaunesco.it', 
-        sitePublication:        'bluedizioni.it', 
-        url:                    'https://www.arabonormannaunesco.it/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        2,
-        selectorBody:           'cheerioLoad("div.inside-article").html() || ""',
-        selectorImg:            'cheerioLoad("img[class*=\'wp-image\']").first().attr("src")',
-        cronImportSitemap:      '20 * * * *'
-    },
-    { 
-        site:                   'inabruzzo.it', 
-        sitePublication:        'bluedizioni.it', 
-        url:                    'https://www.inabruzzo.it/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        2,
-        selectorBody:           'cheerioLoad("#content > div.w-full .text-gray-500").html() || ""',
-        selectorImg:            'cheerioLoad("img[class*=\'wp-image\']").first().attr("src")',
-        cronImportSitemap:      '22 * * * *'
-    },
-    { 
-        site:                   'ilciriaco.it', 
-        sitePublication:        'bluedizioni.it', 
-        url:                    'https://www.ilciriaco.it/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        2,
-        selectorBody:           'cheerioLoad("#main .inside-article").html() || ""',
-        selectorImg:            'cheerioLoad("#main img[class*=\'wp-image\']").first().attr("src")',
-        cronImportSitemap:      '24 * * * *'
-    },
-    { 
-        site:                   'larchitetto.it', 
-        sitePublication:        'bluedizioni.it', 
-        url:                    'https://larchitetto.it/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        2,
-        selectorBody:           'cheerioLoad("#content").html() || ""',
-        selectorImg:            'cheerioLoad("#content img[class*=\'wp-image\']").first().attr("data-src")',
-        cronImportSitemap:      '26 * * * *'
-    },
-    { 
-        site:                   'biopianeta.it', 
-        sitePublication:        'bluedizioni.it', 
-        url:                    'https://biopianeta.it/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        2,
-        selectorBody:           'cheerioLoad("#content article").html() || ""',
-        selectorImg:            'cheerioLoad("#content img[class*=\'wp-post-image\']").first().attr("src")',
-        cronImportSitemap:      '28 * * * *'
-    },
-    { 
-        site:                   'wineandfoodtour.it', 
-        sitePublication:        'bluedizioni.it', 
-        url:                    'https://wineandfoodtour.it/sitemap-news.xml',
-        active:                 1, 
-        format:                 'sitemap',
-        categoryPublishSite:    1,
-        userPublishSite:        2,
-        selectorBody:           'cheerioLoad("#main .post-entry").html() || ""',
-        selectorImg:            'cheerioLoad("#main img[class*=\'wp-post-image\']").first().attr("data-src")',
-        cronImportSitemap:      '30 * * * *'
-    }
-];
-
-Site.insertMany(sitesToInsert)
-.then((docs) => {
-    console.log('Sites inserted successfully:', docs);
-    process.exit(1);
-})
-.catch((err) => {
-    console.error('Error inserting Sites:', err);
-    process.exit(0);
-});
-
-
-// Da aggiungere (magari con un sistema randomico)
-
-// Categoria News
-
-// https://www.inabruzzo.it/sitemap-news.xml
-// https://www.ilciriaco.it/sitemap-news.xml
-
-// Categoria Gossip
-
-// https://larchitetto.it/sitemap-news.xml
-// https://www.blueshouse.it/sitemap-news.xml
-
-// Categoria Curiosità
-
-// https://www.biopianeta.it/sitemap-news.xml
-// https://www.wineandfoodtour.it/sitemap-news.xml
+insert();

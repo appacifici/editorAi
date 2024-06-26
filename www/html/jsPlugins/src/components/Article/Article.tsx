@@ -235,6 +235,16 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 		}
 	}
 
+	const getGenerateGptStatus = (generateGpt:number) => {
+		if( generateGpt === 1 ) {
+			return <i className={`${articleStyle.bichecksquarefill} bi bi-check-square-fill`}></i> ;
+		} else if( generateGpt === 0 ) {
+			return <i className={`${articleStyle.bixsquarefill} bi bi-x-square-fill`}></i>
+		} else if( generateGpt === 3 ) {
+			return <i title="Scartato per errore su generazione"  className={`${articleStyle.bixexclamation} bi bi-exclamation-triangle-fill`}></i>			
+		}
+	}
+
 	const catWP = articleData ? String(articleData.categoryPublishSite) : '0';
 	return (		
 		<>
@@ -387,6 +397,20 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 									<Form.Group controlId="formH1AI">
 										<Form.Label>H1 AI</Form.Label>
 										<Form.Control name="h1Gpt" as="textarea" rows={3} placeholder="H1 AI" defaultValue={articleData ? articleData.h1Gpt as string : ''} />
+									</Form.Group>
+								</Col>		
+							</Row>
+							<Row className={articleStyle.row2}>								
+								<Col>
+									<Form.Group controlId="formBulletPoints">
+										<Form.Label>Bullet Points</Form.Label>
+										<Form.Control name="bulletPoints" as="textarea" placeholder="bulletPoints" defaultValue={articleData ? articleData.bulletPoints as string : ''} />										
+									</Form.Group>
+								</Col>
+								<Col>
+									<Form.Group controlId="formTecnicalInfo">
+										<Form.Label>Scheda tecnica</Form.Label>
+										<Form.Control name="tecnicalInfo" as="textarea" placeholder="tecnicalInfo" defaultValue={articleData ? articleData.tecnicalInfo as string : ''} />										
 									</Form.Group>
 								</Col>		
 							</Row>
@@ -554,7 +578,8 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 									<td className="important" data-modify="input" data-field="screen">{article.url}</td>
 									<td className="important" data-modify="input" data-field="screen">{article.title}</td>																		
 									<td className="important" data-modify="input" data-field="screen">{article.titleGpt}</td>																		
-									<td className="important" data-modify="input" data-field="screen">{article.genarateGpt === 1 ? <i className={`${articleStyle.bichecksquarefill} bi bi-check-square-fill`}></i> : <i className={`${articleStyle.bixsquarefill} bi bi-x-square-fill`}></i>}</td>																		
+									<td className="important" data-modify="input" data-field="screen">
+										{getGenerateGptStatus(article.genarateGpt)}</td>																		
 									<td className="important" data-modify="input" data-field="screen">
 										{getSendWpStatus(article.send)}
 									</td>																		

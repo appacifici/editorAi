@@ -28,6 +28,7 @@ import {
     TYPE_READ_WRITE_DYNAMIC_SCHEMA,
     TypeMsgUserRaplace,
     ACTION_READ_WRITE_DYNAMIC_SCHEMA,
+    ACTION_READ_WRITE_DYNAMIC_SECTION,
     NextArticleGenerate,
     isStructureChapter
 }                                                           from './Interface/OpenAiInterface';
@@ -380,6 +381,36 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     }
                     this.alertUtility.setCallResponse(alertProcess, `createDataSave: OK`);                        
                     console.log('Salvataggio generato correttamente e completato con successo.');
+
+                } else if( call.saveFunction == ACTION_READ_WRITE_DYNAMIC_SECTION ) {
+                                
+                    this.alertUtility.setCallData(alertProcess, `updateDynamicSectionResponse: response, call, article`,false);
+                    const responseUpdate:boolean|unknown = await this.updateDynamicSectionResponse(response, call, article );  
+                    if( responseUpdate instanceof Error ) {
+                        this.alertUtility.setError(alertProcess, `updateDynamicSectionResponse:<br> `, false );
+                        this.alertUtility.setError(alertProcess, responseUpdate );
+                        return false;
+                    }
+                    if( responseUpdate === false ) {    
+                        this.alertUtility.setError(alertProcess, `updateDynamicSectionResponse: false ` );
+                        return false;
+                    }
+                    this.alertUtility.setCallResponse(alertProcess, `updateDynamicSectionResponse:${responseUpdate}`); 
+                                                    
+                        
+                    this.alertUtility.setCallData(alertProcess, `createDataSave: `,false);             
+                    this.alertUtility.setCallData(alertProcess, promptAi,false);             
+                    this.alertUtility.setCallData(alertProcess, call,false);             
+                    this.alertUtility.setCallData(alertProcess, setCompleteCall,false);             
+                    this.alertUtility.setCallData(alertProcess, siteName);             
+                    const createDataSave:boolean|unknown = await this.createDataSave(null, promptAi, call, setCompleteCall, siteName );    
+                    if( createDataSave instanceof Error ) {
+                        this.alertUtility.setError(alertProcess, `createDataSave:<br> `, false );
+                        this.alertUtility.setError(alertProcess, createDataSave );
+                        return false;
+                    }
+                    this.alertUtility.setCallResponse(alertProcess, `createDataSave: OK`);                        
+                    console.log('Salvataggio generato correttamente e completato con successo.');
                     
 
                 //Chiusura chiamate calls e salvataggio articolo a complete 1
@@ -683,7 +714,52 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
             for (const saveTo of call.saveTo) {                
                 switch( saveTo.schema ) {
                     case 'Article':
-                        const value  = jsonResponse[`${saveTo.responseField}`];
+                        let value;
+                        if( saveTo.responseField !== undefined ) {
+                            value   = jsonResponse[`${saveTo.responseField}`];
+                        } else {
+                            value   = response;
+                        }
+                        if( typeof value == 'object') {
+                            value = JSON.stringify(value);
+                        }
+                        const filter = { _id: article._id };
+                        const field  = saveTo.field 
+                        const update = {[field]: value}
+                        await Article.findOneAndUpdate(filter, update).then(result => {
+                            
+                        }).catch(async error => {         
+                            return error;
+                        });
+                    break;
+                    case 'SitePubblication':                        
+                        
+                    break;
+                }                
+            }
+        } catch (error: unknown) {            
+            return error;
+        }                
+        return true;        
+    }
+
+     /**
+     * Salva il dato in update nella tabella Article
+     */
+     private async updateDynamicSectionResponse(response: string, call: PromptAICallInterface, article:ArticleWithIdType): Promise<boolean|unknown> {    
+        try {
+            const jsonResponse:any = JSON.parse(response);
+            if( typeof call.saveTo === 'string' ) {
+                return false;
+            }
+            
+            for (const saveTo of call.saveTo) {                
+                switch( saveTo.schema ) {
+                    case 'Article':
+                        let value   = jsonResponse[`${saveTo.responseField}`];
+                        if( typeof value == 'object') {
+                            value = JSON.stringify(value);
+                        }
                         const filter = { _id: article._id };
                         const field  = saveTo.field 
                         const update = {[field]: value}

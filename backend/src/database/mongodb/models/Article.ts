@@ -112,7 +112,7 @@ const ArticleSchema   = new Schema({
         required:   false,
     },
     categoryPublishSite: { 
-        type:       Number, 
+        type:       String, 
         required:   false        
     },    
     userPublishSite: { 

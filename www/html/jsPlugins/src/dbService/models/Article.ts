@@ -19,7 +19,7 @@ type ArticleType = {
     h1Gpt?:             string;
     send?:              number;   
     genarateGpt:        number;   
-    categoryPublishSite:Number;   
+    categoryPublishSite:string;   
     userPublishSite:    Number;   
     lastMod:            Date;   
     publishDate:        Date;   
@@ -112,7 +112,7 @@ const ArticleSchema   = new Schema({
         required:   false,
     },
     categoryPublishSite: { 
-        type:       Number, 
+        type:       String, 
         required:   false        
     },    
     userPublishSite: { 

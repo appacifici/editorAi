@@ -7,7 +7,7 @@ program.version('1.0.0').description('CLI team commander')
     .action((options) => {            
         const wodpressApi = new WordpressApi();
         switch( options.site ) {            
-            case 'bluedizioni.it':                                             
+            case 'acquistigiusti.it':                                             
             case 'roma.cronacalive.it':                                             
             case 'modaeimmagine.it':                                             
                 wodpressApi.getWpApiCategories(options.site);        

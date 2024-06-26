@@ -4,7 +4,5 @@
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
   "/promptAi": "pages/promptAi.js",
-  "/article": "pages/article.js",
-  "/sites": "pages/sites.js",
-  "/sitespublication": "pages/sitespublication.js"
+  "/article": "pages/article.js"
 }

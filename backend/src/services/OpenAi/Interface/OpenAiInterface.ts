@@ -7,6 +7,7 @@ const TYPE_IN_JSON:string                               = 'inJson';
 const TYPE_READ_STRUCTURE_FIELD:string                  = 'readStructureField';
 const TYPE_READ_FROM_DATA_PROMPT_AND_ARTICLE:string     = 'readStructureFieldAndArticle'; //Prende il testo dallo schema article e lo genera completando lo user message dal campo data del promptAi
 const TYPE_READ_WRITE_DYNAMIC_SCHEMA:string             = 'readWriteDimanycSchema'; //Prende il testo dallo schema article e lo genera completando lo user message dal campo data del promptAi
+const TYPE_READ_WRITE_DYNAMIC_INFO:string               = 'readWriteDimanycInfo'; //Prende il testo dallo schema article e lo genera completando lo user message dal campo data del promptAi
 
 //Tipi di azioni(funzioni) che si possono invocare nella call
 const ACTION_CREATE_DATA_SAVE:string            = 'createDataSave'; //salvataggio in campo data promptAi
@@ -15,6 +16,7 @@ const ACTION_WRITE_BODY_ARTICLE:string          = 'writeBodyArticle'; //Salvatag
 const ACTION_WRITE_TOTAL_ARTICLE:string         = 'writeTotalArticle'; //Salvataggio articolo completo in 1 step
 const ACTION_CALLS_COMPLETE:string              = 'callsCompete'; //Tutte le calls eseguite
 const ACTION_READ_WRITE_DYNAMIC_SCHEMA:string   = 'readWriteDimanycSchema'; //Tutte le calls eseguite
+const ACTION_READ_WRITE_DYNAMIC_SECTION:string  = 'readWriteDinamycSection'; //Tutte le calls eseguite
 
 interface NextArticleGenerate {
     sitePublication: SitePublicationWithIdType;
@@ -41,6 +43,12 @@ type TypeMsgUserRaplace = {
     schema: string; 
     field:  string;
 }
+
+type TypeMsgSystemRaplace = {
+    field:       string; 
+    function:    string;
+}
+
 interface TypeSavaToObject extends TypeMsgUserRaplace {
     responseField: string;
 }
@@ -55,17 +63,18 @@ interface PromptAICallInterface {
     removeHtmlTags: boolean; //Se deve chiamare la funzione di rimozione dei tags
     lastBodyAppend: boolean;
     msgUser:    {
-        type:   string,
+        type:   string, //Specifica il type delle costanti per lo switch di OpenAiService che conosce la logica specifica di lettura dell'oggetto
         user?:   [{
-            message: string 
+            message: string //Message User base in cui effettuare il replace
         }],
         field:       string
-        key?:        string,
-        message:     string 
-        readKey?:    string 
-        replace?:    [TypeMsgUserRaplace] 
+        key?:        string, //se i dati da leggere sono dentro il campo data del promptAi in formato json 
+        message:     string  //Se il type è uno di quelli semplici lo user message è stampato direttamente qui dentro
+        readKey?:    string //Dato il campo sopra specifica quale sia la chiave del json
+        replace?:    [TypeMsgUserRaplace] //Se fa effettuato i replace sul user message
+        replaceSystem?: [TypeMsgSystemRaplace] //Se fa effettuato i replace sul system message
     };
-    complete:       number;
+    complete:       number; //se la call è stata eseguita è 1
 }
 
 interface StructureChapter {
@@ -101,10 +110,12 @@ export {
     TYPE_READ_STRUCTURE_FIELD,
     TYPE_READ_FROM_DATA_PROMPT_AND_ARTICLE,
     TYPE_READ_WRITE_DYNAMIC_SCHEMA,
+    TYPE_READ_WRITE_DYNAMIC_INFO,
     ACTION_CREATE_DATA_SAVE,
     ACTION_UPDATE_SCHEMA_ARTICLE,
     ACTION_WRITE_BODY_ARTICLE,
     ACTION_WRITE_TOTAL_ARTICLE,
     ACTION_CALLS_COMPLETE,
-    ACTION_READ_WRITE_DYNAMIC_SCHEMA        
+    ACTION_READ_WRITE_DYNAMIC_SCHEMA,
+    ACTION_READ_WRITE_DYNAMIC_SECTION
 };
