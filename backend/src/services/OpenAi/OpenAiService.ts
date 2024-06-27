@@ -608,29 +608,35 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         // console.log("promptAi");
                         const oReplace:[TypeMsgUserRaplace]|undefined                        = call.msgUser.replace;
                         
+                        //Gestisce il replace dinamico dei placeholder contenuti nel message di sistema 
                         if( call.msgUser.replaceSystem !== undefined ) {                                                     
-                            console.log(call.msgUser.replaceSystem.callFunction);
-                            switch( call.msgUser.replaceSystem.callFunction ) {
-                                case 'getTecnicalTemplateCmsAdmin':
-                                    const cmsAdminApi = new CmsAdminApi();
-                                    const tecnicalTemplate:string|Error = await cmsAdminApi.getCmsAdminTecnicalTemplate(sitePublication,article);
-                                    if( tecnicalTemplate instanceof Error ) {
-                                        return tecnicalTemplate;
-                                    }
+                            
+                            let getResponse:string|Error = '';
+                            const cmsAdminApi   = new CmsAdminApi();
 
-                                    if( step !== null && step.messages !== null && step.messages[0] !== null && step.messages[0].content !== null ) {                                        
-                                        const placeholder:string        = `[#${call.msgUser.replaceSystem.field}#]`;
-                                        // @ts-ignore
-                                        step.messages[0].content        = step.messages[0].content.replace(/\\"/g, '\\"');
-                                        // @ts-ignore
-                                        step.messages[0].content        = step.messages[0].content.replace(placeholder, tecnicalTemplate)+'.';                                        
-                                    }
+                            switch( call.msgUser.replaceSystem.callFunction ) {
+                                case 'getTecnicalTemplateCmsAdmin':                                    
+                                    getResponse         = await cmsAdminApi.getCmsAdminTecnicalTemplate(sitePublication,article);                              
                                 break;
+                                case 'getBacklinkSectionsCmsAdmin':                                    
+                                    getResponse         = await cmsAdminApi.getBacklinkSectionsCmsAdmin(sitePublication,article);                                    
+                                break;
+                            }
+                            if( getResponse instanceof Error ) {
+                                return getResponse;
+                            }
+
+                            if( step !== null && step.messages !== null && step.messages[0] !== null && step.messages[0].content !== null ) {                                        
+                                const placeholder:string        = `[#${call.msgUser.replaceSystem.field}#]`;
+                                // @ts-ignore
+                                step.messages[0].content        = step.messages[0].content.replace(/\\"/g, '\\"');
+                                // @ts-ignore
+                                step.messages[0].content        = step.messages[0].content.replace(placeholder, getResponse)+'.';                                        
                             }
                             
                         }                        
                         
-                        
+                        //Gestisce il replace dinamico dei placeholder contenuti nel message dell'utente 
                         if( oReplace !== undefined && call.msgUser.user != undefined ) {
                             for (const userMsg of call.msgUser.user) {
                                 let message                         = userMsg.message;                        
@@ -747,12 +753,28 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         }
     }
     
+    private isValidJSON(response: string): boolean {
+        try {
+            JSON.parse(response);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
     /**
      * Salva il dato in update nella tabella Article
      */
     private async updateDynamicResponse(response: string, call: PromptAICallInterface, article:ArticleWithIdType): Promise<boolean|unknown> {    
         try {
-            const jsonResponse:any = JSON.parse(response);
+
+            let jsonResponse:any = '';
+            if (this.isValidJSON(response)) {
+                jsonResponse = JSON.parse(response);
+            } else {
+
+            }
+
             if( typeof call.saveTo === 'string' ) {
                 return false;
             }

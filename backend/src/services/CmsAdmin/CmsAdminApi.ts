@@ -105,6 +105,28 @@ class CmsAdminApi extends BaseAlert{
             }
         }
     }
+
+    public async getBacklinkSectionsCmsAdmin(sitePublication: SitePublicationWithIdType,article:ArticleWithIdType):Promise<string|Error> {
+        
+        // console.log(sitePublication);
+        //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
+        // http://80.181.225.51:8050/api/getSections
+
+        try{            
+            const sections = JSON.parse(article.categoryPublishSite);
+            const endPoint = `http://80.181.225.51:8050/api/getBackLinkSections?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
+            const response = await axios.get(endPoint);            
+            return JSON.stringify(response.data);
+        } catch (error: unknown) {                     
+            if (isError(error)) {
+                return error as Error;
+            } else {
+                // Gestisci il caso in cui `error` non sia un'istanza di `Error`
+                // Potresti voler creare e restituire un nuovo Error standard qui
+                return new Error('getBacklinkSectionsCmsAdmin errore generico');
+            }
+        }
+    }
 }
 
 // Francesco Totti e i suoi luoghi preferiti nel Lazio: da Sabaudia ad Anzio
