@@ -189,7 +189,8 @@ app.get('/api/article/:id', async (req, res) => {
 					categoryPublishSite: 	article.categoryPublishSite.toString(),
 					userPublishSite: 		article.userPublishSite.toString(),
 					send: 					article.send?.toString(),
-					genarateGpt: 			article.genarateGpt?.toString()					
+					genarateGpt: 			article.genarateGpt?.toString(),				
+					tecnicalInfo: 			article.tecnicalInfo?.toString()					
 				};
 				return res.json(modifiedArticle); 
 			}

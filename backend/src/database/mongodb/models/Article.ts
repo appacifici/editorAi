@@ -19,7 +19,7 @@ type ArticleType = {
     h1Gpt?:             string;
     send?:              number|string;   
     genarateGpt:        number|string;   
-    categoryPublishSite:number|string;   
+    categoryPublishSite:string;   
     userPublishSite:    number|string;   
     lastMod:            Date;   
     publishDate:        Date;   

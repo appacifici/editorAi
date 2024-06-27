@@ -40,13 +40,14 @@ interface ChatMessage {
 }
 
 type TypeMsgUserRaplace = {
-    schema: string; 
-    field:  string;
+    schema?:        string; 
+    field?:         string;
+    callFunction?:  string;
 }
 
 type TypeMsgSystemRaplace = {
-    field:       string; 
-    function:    string;
+    field:          string; 
+    callFunction:   string;
 }
 
 interface TypeSavaToObject extends TypeMsgUserRaplace {
@@ -72,7 +73,7 @@ interface PromptAICallInterface {
         message:     string  //Se il type è uno di quelli semplici lo user message è stampato direttamente qui dentro
         readKey?:    string //Dato il campo sopra specifica quale sia la chiave del json
         replace?:    [TypeMsgUserRaplace] //Se fa effettuato i replace sul user message
-        replaceSystem?: [TypeMsgSystemRaplace] //Se fa effettuato i replace sul system message
+        replaceSystem?: TypeMsgSystemRaplace //Se fa effettuato i replace sul system message
     };
     complete:       number; //se la call è stata eseguita è 1
 }

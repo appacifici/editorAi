@@ -12,18 +12,18 @@ program.version('1.0.0').description('CLI team commander')
         const openAiService: OpenAiService      = new OpenAiService();        
 
         switch (options.site) {                        
-            case 'roma.cronacalive.it':   
+            case 'acquistigiusti.it':   
                 try {                    
                     const openAiService: OpenAiService  					= new OpenAiService();
-                    const nextArticleGenerate:NextArticleGenerate|null 		= await openAiService.getNextArticleGenerate('roma.cronacalive.it', 0);
+                    const nextArticleGenerate:NextArticleGenerate|null 		= await openAiService.getNextArticleGenerate('acquistigiusti.it', 0);
                     if( nextArticleGenerate !== null && nextArticleGenerate.article !== null && nextArticleGenerate.site !== null) {
                         const processName:string                			= `generateGptArticle`;
-                        const processLabel:string                			= `generateGptArticle roma.cronacalive.it ${nextArticleGenerate.article._id}`;
+                        const processLabel:string                			= `generateGptArticle acquistigiusti.it ${nextArticleGenerate.article._id}`;
                         const alertProcess:string               			= openAiService.alertUtility.initProcess(processLabel); //. date('YmdHis')
                         openAiService.alertUtility.setLimitWrite(60000);
             
-                        await openAiService.getInfoPromptAi(alertProcess, processName, 'roma.cronacalive.it', "663cf6a56b400c009341d274", 0, null);
-                        await openAiService.alertUtility.write(alertProcess, processName, nextArticleGenerate.site.site, 'roma.cronacalive.it');
+                        await openAiService.getInfoPromptAi(alertProcess, processName, 'acquistigiusti.it', "667d99c5c470065b6de45cb1", 0, null);
+                        await openAiService.alertUtility.write(alertProcess, processName, nextArticleGenerate.site.site, 'acquistigiusti.it');
                     }
                     process.exit(0);
                 } catch (error) {

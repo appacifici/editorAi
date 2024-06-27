@@ -36,6 +36,7 @@ import { writeErrorLog }                                    from '../Log/Log';
 import { IOpenAiService }                                   from './Interface/IOpenAiService';
 import { BaseAlert } from '../Alert/BaseAlert';
 import Site, { SiteWithIdType } from '../../database/mongodb/models/Site';
+import CmsAdminApi from '../CmsAdmin/CmsAdminApi';
 
 const result = dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -180,7 +181,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                 this.alertUtility.setCallData(alertProcess, call, false);          
                 this.alertUtility.setCallData(alertProcess, promptAi, false);          
                 this.alertUtility.setCallData(alertProcess, text);          
-                const jsonChatCompletation:ChatCompletionCreateParamsNonStreaming|Error = this.appendUserMessage(step,call,promptAi,text);
+                const jsonChatCompletation:ChatCompletionCreateParamsNonStreaming|Error = await this.appendUserMessage(step,call,promptAi,text,sitePublication,article);
                 if( jsonChatCompletation instanceof Error ) {
                     this.alertUtility.setError(alertProcess, `appendUserMessage:<br> `, false );
                     this.alertUtility.setError(alertProcess, jsonChatCompletation );
@@ -515,7 +516,14 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     /**
      * Funzione che appende il role user al ChatCompletation     
      */
-    private appendUserMessage(step:ChatCompletionCreateParamsNonStreaming,call:PromptAICallInterface,promptAi: PromptAiWithIdType,title:string|any): ChatCompletionCreateParamsNonStreaming|Error {            
+    private async appendUserMessage(
+        step:ChatCompletionCreateParamsNonStreaming,
+        call:PromptAICallInterface,
+        promptAi: PromptAiWithIdType,
+        title:string|any,
+        sitePublication: SitePublicationWithIdType,
+        article:ArticleWithIdType
+    ): Promise<ChatCompletionCreateParamsNonStreaming|Error> {            
         try{
             switch( call.msgUser.type ) {
                 //Se il tipo è inJson significa che il messaggio utente e nello stesso campo
@@ -598,16 +606,55 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         // console.log("call");
                         // console.log(call);
                         // console.log("promptAi");
-                        const oReplace:[TypeMsgUserRaplace]|undefined                        = call.msgUser.replace;                               
+                        const oReplace:[TypeMsgUserRaplace]|undefined                        = call.msgUser.replace;
+                        
+                        if( call.msgUser.replaceSystem !== undefined ) {                                                     
+                            console.log(call.msgUser.replaceSystem.callFunction);
+                            switch( call.msgUser.replaceSystem.callFunction ) {
+                                case 'getTecnicalTemplateCmsAdmin':
+                                    const cmsAdminApi = new CmsAdminApi();
+                                    const tecnicalTemplate:string|Error = await cmsAdminApi.getCmsAdminTecnicalTemplate(sitePublication,article);
+                                    if( tecnicalTemplate instanceof Error ) {
+                                        return tecnicalTemplate;
+                                    }
+
+                                    if( step !== null && step.messages !== null && step.messages[0] !== null && step.messages[0].content !== null ) {                                        
+                                        const placeholder:string        = `[#${call.msgUser.replaceSystem.field}#]`;
+                                        // @ts-ignore
+                                        step.messages[0].content        = step.messages[0].content.replace(/\\"/g, '\\"');
+                                        // @ts-ignore
+                                        step.messages[0].content        = step.messages[0].content.replace(placeholder, tecnicalTemplate)+'.';                                        
+                                    }
+                                break;
+                            }
+                            
+                        }                        
                         
                         
                         if( oReplace !== undefined && call.msgUser.user != undefined ) {
                             for (const userMsg of call.msgUser.user) {
                                 let message                         = userMsg.message;                        
-                                for (const itemReplace of oReplace) {                                 
-                                    const placeholder:string        = `[#${itemReplace.field}#]`;
-                                    message                         = message.replace(/\\"/g, '\\"');
-                                    message                         = message.replace(placeholder, title[`${itemReplace.field}`])+'.';
+                                for (const itemReplace of oReplace) {     
+                                    //Se è settato il campo field ha gia recuperato il dato da uno schema       
+                                    if( itemReplace.schema !== undefined ) {                     
+                                        const placeholder:string        = `[#${itemReplace.field}#]`;
+                                        message                         = message.replace(/\\"/g, '\\"');
+                                        message                         = message.replace(placeholder, title[`${itemReplace.field}`])+'.';
+                                    } else if( itemReplace.callFunction !== undefined ) {    
+                                        const cmsAdminApi = new CmsAdminApi();
+                                        switch(itemReplace.callFunction) {
+                                            case 'getSectionsCmsAdmin':
+                                                const sections:string|Error = await cmsAdminApi.getSectionsCmsAdmin(sitePublication,article);
+                                                if( sections instanceof Error ) {
+                                                    return sections;
+                                                }
+                                                console.log(sections);
+                                                const placeholder:string        = `[#${itemReplace.field}#]`;
+                                                message                         = message.replace(/\\"/g, '\\"');
+                                                message                         = message.replace(placeholder, sections)+'.';
+                                            break;
+                                        }
+                                    }
                                 }
                                 
                                 console.log(title);
@@ -615,8 +662,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                     role:    'user', 
                                     content: message
                                 };
-                                step.messages.push(chatMessage)
-                                console.log('eccoim');
+                                step.messages.push(chatMessage)                                
                             }
                         }                    
                     }
