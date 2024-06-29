@@ -8,7 +8,7 @@ import { SitePublicationSchema, ISitePublication,
     SitePublicationArrayType }                          from '../database/mongodb/models/SitePublication';
 import { AlertSchema, IAlert } from '../database/mongodb/models/Alert';
 
-connectMongoDB();
+
 
 const SitePublication:      Model<ISitePublication>         = mongoose.model<ISitePublication>('SitePublication', SitePublicationSchema);
 const Site:                 Model<ISite>                    = mongoose.model<ISite>('Site', SiteSchema);
@@ -18,6 +18,8 @@ const PromptAi:             Model<IPromptAi>                = mongoose.model<IPr
 const Alert:                Model<IAlert>                   = mongoose.model<IAlert>('Alert', AlertSchema);
 
 const insert = async () => {
+    await connectMongoDB();
+    
     const sitePublicationToInsert:SitePublicationArrayType = [
         {   sitePublication:    'acquistigiusti.it', 
             tokenUrl:           '...',

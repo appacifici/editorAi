@@ -15,17 +15,6 @@ services:
       - ./variables.env
     restart: unless-stopped #Riavvia il contenitore sempre tranne che se bloccato manualmente e non lo riavvia se viene riavviato docker
                             #https://docs.docker.com/config/containers/start-containers-automatically/#restart-policy-details
-
-  mongodbgpt:
-    image: mongo:latest
-    container_name: mongodb-container-gpt
-    ports:
-      - "27017:27017"
-    volumes:
-      - ./data:/data/db
-    # environment:
-    #   MONGO_INITDB_ROOT_USERNAME: openaiuser
-    #   MONGO_INITDB_ROOT_PASSWORD: h98834958fh3405870
     
   nodegpt:
     build: ./node/
@@ -82,7 +71,19 @@ services:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:cache
     restart: unless-stopped
 
-
+  mongodbgpt:
+    image: mongo:latest
+    container_name: mongodb-container-gpt
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: openaiuser
+      MONGO_INITDB_ROOT_PASSWORD: h98834958fh3405870
+    command: [--auth]
+    #mongosh --host mongodbgpt -u openaiuser -p h98834958fh3405870 --authenticationDatabase admin
+    
 volumes: #persiste questi volumi tra host e container anche al down dei container
   mysql-data-gpt:
   mongodb-data-gpt:

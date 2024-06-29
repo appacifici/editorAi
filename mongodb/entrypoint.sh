@@ -1,22 +1,53 @@
 #!/bin/bash
 
-# Assicurati che MongoDB sia arrestato correttamente quando il container viene terminato.
-trap "echo 'Stopping MongoDB'; mongod --shutdown; exit 0" SIGTERM SIGINT
+init() {
+  # Assicura che MongoDB sia arrestato correttamente quando il contenitore viene terminato.
+  trap "echo 'Stopping MongoDB'; mongod --shutdown; exit 0" SIGTERM SIGINT
 
-# Verifica se il DB deve essere inizializzato (es. controlli personalizzati, seeding, ecc.)
-# Questo è un buon posto per eseguire script di inizializzazione o seed database, se necessario.
+  # Avvia MongoDB in background
+  mongod --bind_ip_all --fork --logpath /var/log/mongodb/mongod.log
 
-echo "Avvio di MongoDB..."
-# Avvia MongoDB in background
-mongod &
+  echo "Starting MongoDB..."
 
-# Attendi che MongoDB sia completamente avviato (potresti voler modificare questo per usare netcat o simili)
-while ! mongo --eval "print(\"waited for connection\")" > /dev/null 2>&1; do
-  sleep 1
-done
+  # Attendi che MongoDB sia completamente avviato
+  for i in {1..60}; do
+    if mongo --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
+      echo "MongoDB started successfully."
+      break
+    fi
+    echo "Waiting for MongoDB to start... ($i)"
+    sleep 1
+  done
 
-echo "MongoDB avviato."
+  if ! mongo --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
+    echo "MongoDB failed to start."
+    exit 1
+  fi
 
-# Mantieni il processo in primo piano, altrimenti Docker considererà che il container sia terminato.
-# Questo è particolarmente importante in uno script entrypoint per assicurarsi che il container continui a eseguire.
-tail -f /dev/null
+  # Crea gli utenti nel database
+  echo "Creating MongoDB users..."
+  mongo admin --eval "db.createUser({ user: 'openaiuser', pwd: 'h98834958fh3405870', roles: [ { role: 'root', db: 'admin' } ] });"
+
+  echo "MongoDB users created."
+
+  # Mantieni il processo in primo piano per evitare che il contenitore esca immediatamente
+  tail -f /dev/null
+}
+
+case "$1" in
+  init)
+    init
+    ;;
+  bash)
+    /bin/bash
+    ;;
+  sh)
+    /bin/sh
+    ;;
+  *)
+    echo "This container accepts the following commands:"
+    echo "- init"
+    echo "- bash"
+    exit 1
+    ;;
+esac

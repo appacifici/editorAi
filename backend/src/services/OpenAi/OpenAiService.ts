@@ -1110,5 +1110,3 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
 // c.getInfoPromptAi('acquistigiusti.it', 'Come scegliere un cardiofrequenzimetro');
 
 export default OpenAiService;
-
-

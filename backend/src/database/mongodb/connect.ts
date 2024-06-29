@@ -8,13 +8,14 @@ if (result.error) {
 
 const connectMongoDB = async () => {
     try {
-        await mongoose.connect(`mongodb://${process.env.MONGO_DB_HOST}:27017/newsgpt`, {
-            
+        await mongoose.connect(`mongodb://openaiuser:h98834958fh3405870@${process.env.MONGO_DB_HOST}:27017/newsgpt?authSource=admin`, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
         });
         console.log('Mongoose connected to MongoDB');
         console.log(`mongodb://${process.env.MONGO_DB_HOST}:27017/newsgpt`);
     } catch (err) {
-        console.error('Error connecting to MongoDB');        
+        console.error('Error connecting to MongoDB',err);        
         process.exit(1);
     }
 };
