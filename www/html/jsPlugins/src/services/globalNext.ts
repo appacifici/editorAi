@@ -6,10 +6,10 @@ import { BACKEND_ENDPOINT } from '../constants';
 const connectMongoDB = async () => {
     try {
 
-        await mongoose.connect(`mongodb://${process.env.NEXT_PUBLIC_MONGO_DB_HOST}:27017/newsgpt`, {
-
+        await mongoose.connect(`mongodb://openaiuser:h98834958fh3405870@${process.env.NEXT_PUBLIC_MONGO_DB_HOST}:27017/newsgpt?authSource=admin`, {            
+            
         });
-        console.log(`Mongoose connected to MongoDB: mongodb://${process.env.NEXT_PUBLIC_MONGO_DB_HOST}:27017/newsgpt`);
+        console.log(`Mongoose connected to MongoDB: mongodb://openaiuser:h98834958fh3405870@${process.env.NEXT_PUBLIC_MONGO_DB_HOST}:27017/newsgpt`);
     } catch (err) {
         console.error('Error connecting to MongoDB');
         process.exit(1);

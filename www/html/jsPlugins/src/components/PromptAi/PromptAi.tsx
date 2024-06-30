@@ -172,13 +172,12 @@ const PromptAiComponent: React.FC<PromptAiProps> = ({ promptsAi, total, page, pa
 													wrap: true,
 													useWorker: true // Utilizza un worker per la validazione del JSON
 												}}
-												height="300px"
+												height="600px"
 												width="100%"
 											/>
 									</Form.Group>
 								</Col>
-							</Row>							
-							<Row className={promptAiStyle.row2}>
+							
 								<Col>
 									<Form.Group controlId="formSteps">
 										<Form.Label>steps</Form.Label>
@@ -199,7 +198,7 @@ const PromptAiComponent: React.FC<PromptAiProps> = ({ promptsAi, total, page, pa
 													wrap: true,
 													useWorker: true // Utilizza un worker per la validazione del JSON
 												}}
-												height="300px"
+												height="600px"
 												width="100%"
 											/>
 									</Form.Group>

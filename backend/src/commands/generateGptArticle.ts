@@ -22,7 +22,7 @@ program.version('1.0.0').description('CLI team commander')
                         const alertProcess:string               			= openAiService.alertUtility.initProcess(processLabel); //. date('YmdHis')
                         openAiService.alertUtility.setLimitWrite(60000);
             
-                        await openAiService.getInfoPromptAi(alertProcess, processName, 'acquistigiusti.it', "667dc5296e7a16a423bef438", 0, null);
+                        await openAiService.getInfoPromptAi(alertProcess, processName, 'acquistigiusti.it', "668060f54c7ad7402d5636ca", 0, null);
                         await openAiService.alertUtility.write(alertProcess, processName, nextArticleGenerate.site.site, 'acquistigiusti.it');
                     }
                     process.exit(0);

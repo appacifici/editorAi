@@ -15,28 +15,28 @@ import {
 import { 
     ACTION_CREATE_DATA_SAVE, 
     ACTION_UPDATE_SCHEMA_ARTICLE,
-    TYPE_IN_JSON, 
-    TYPE_READ_STRUCTURE_FIELD, 
-    TYPE_READ_FROM_DATA_PROMPT_AND_ARTICLE,
-    PromptAICallInterface, 
-    PromptAiCallsInterface, 
-    StructureChapter, 
-    StructureChaptersData, 
     ACTION_WRITE_BODY_ARTICLE,
     ACTION_WRITE_TOTAL_ARTICLE,
     ACTION_CALLS_COMPLETE,
-    TYPE_READ_WRITE_DYNAMIC_SCHEMA,
-    TypeMsgUserRaplace,
     ACTION_READ_WRITE_DYNAMIC_SCHEMA,
     ACTION_READ_WRITE_DYNAMIC_SECTION,
+    TYPE_IN_JSON, 
+    TYPE_READ_STRUCTURE_FIELD, 
+    TYPE_READ_FROM_DATA_PROMPT_AND_ARTICLE,
+    TYPE_READ_WRITE_DYNAMIC_SCHEMA,
+    PromptAICallInterface, 
+    PromptAiCallsInterface, 
+    StructureChapter, 
+    StructureChaptersData,         
+    TypeMsgUserRaplace,    
     NextArticleGenerate,
     isStructureChapter
 }                                                           from './Interface/OpenAiInterface';
 import { writeErrorLog }                                    from '../Log/Log';
 import { IOpenAiService }                                   from './Interface/IOpenAiService';
-import { BaseAlert } from '../Alert/BaseAlert';
-import Site, { SiteWithIdType } from '../../database/mongodb/models/Site';
-import CmsAdminApi from '../CmsAdmin/CmsAdminApi';
+import { BaseAlert }                                        from '../Alert/BaseAlert';
+import Site, { SiteWithIdType }                             from '../../database/mongodb/models/Site';
+import CmsAdminApi                                          from '../CmsAdmin/CmsAdminApi';
 
 const result = dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -57,6 +57,9 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         connectMongoDB();
     }
 
+    /**
+     * Recupera il prossimo articolo da generare     
+     */
     public async getNextArticleGenerate(siteName: string, generateValue: number): Promise<NextArticleGenerate|null> {
         const sitePublication: SitePublicationWithIdType | null     = await SitePublication.findOne({sitePublication: siteName});
         const article:ArticleWithIdType | null                      = await Article.findOne({ sitePublication: sitePublication?._id, genarateGpt: generateValue }).sort({ lastMod: 1 }) as ArticleWithIdType | null;        
@@ -73,6 +76,9 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         }
     }
 
+    /* 
+        Processo principale per la generazione 
+    */
     public async getInfoPromptAi(alertProcess:string, processName:string, siteName: string, promptAiId:string, generateValue: number, articleGenerate:ArticleWithIdType|null): Promise<boolean> {
 
         //Recupera la logina di generazione in base al sito su cui pubblicare
@@ -129,7 +135,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         this.alertUtility.setCallData(alertProcess, call, false);
         this.alertUtility.setCallData(alertProcess, sitePublication, false);
         this.alertUtility.setCallData(alertProcess, article);            
-        text = this.getDinamycField(call,sitePublication, article);                            
+        text = this.getDinamycField(call,sitePublication, article, promptAi);                            
         if( text instanceof Error ) {
             this.alertUtility.setError(alertProcess, `getDinamycField2:<br> `, false );
             this.alertUtility.setError(alertProcess, text );
@@ -356,7 +362,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                 } else if( call.saveFunction == ACTION_READ_WRITE_DYNAMIC_SCHEMA ) {
                                 
                     this.alertUtility.setCallData(alertProcess, `updateDynamicResponse: response, call, article`,false);
-                    const responseUpdate:boolean|unknown = await this.updateDynamicResponse(response, call, article );  
+                    const responseUpdate:boolean|unknown = await this.updateDynamicResponse(response, call, article, promptAi, setCompleteCall, siteName );  
                     if( responseUpdate instanceof Error ) {
                         this.alertUtility.setError(alertProcess, `updateDynamicResponse:<br> `, false );
                         this.alertUtility.setError(alertProcess, responseUpdate );
@@ -447,7 +453,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     }
 
     //recupera il campo da leggere
-    private getDinamycField(call:PromptAICallInterface,sitePublication: SitePublicationWithIdType,article:ArticleWithIdType): string|object|Error {
+    private getDinamycField(call:PromptAICallInterface,sitePublication: SitePublicationWithIdType,article:ArticleWithIdType, promptAi:PromptAiWithIdType): string|object|Error {
         try{
             if( typeof call.readTo == 'object' ) {
                 let response:any = {};         
@@ -458,6 +464,10 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         break;
                         case 'SitePubblication':                        
                             response[`${readTo.field}`] = typeof sitePublication[`${readTo.field}`] == 'object' ? JSON.stringify(sitePublication[`${readTo.field}`]) : sitePublication[`${readTo.field}`];
+                        break;
+                        case 'PromptAi':                        
+                            //@ts-ignore
+                            response[`${readTo.field}`] = typeof promptAi[`${readTo.field}`] == 'object' ? JSON.stringify(promptAi[`${readTo.field}`]) : promptAi[`${readTo.field}`];
                         break;
                     }                
                 }                
@@ -653,8 +663,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                                 const sections:string|Error = await cmsAdminApi.getSectionsCmsAdmin(sitePublication,article);
                                                 if( sections instanceof Error ) {
                                                     return sections;
-                                                }
-                                                console.log(sections);
+                                                }                                                
                                                 const placeholder:string        = `[#${itemReplace.field}#]`;
                                                 message                         = message.replace(/\\"/g, '\\"');
                                                 message                         = message.replace(placeholder, sections)+'.';
@@ -662,8 +671,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                         }
                                     }
                                 }
-                                
-                                console.log(title);
+                                                                
                                 let chatMessage:ChatCompletionUserMessageParam = {
                                     role:    'user', 
                                     content: message
@@ -765,7 +773,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     /**
      * Salva il dato in update nella tabella Article
      */
-    private async updateDynamicResponse(response: string, call: PromptAICallInterface, article:ArticleWithIdType): Promise<boolean|unknown> {    
+    private async updateDynamicResponse(response: string, call: PromptAICallInterface, article:ArticleWithIdType, promptAi: PromptAiWithIdType, setCompleteCall:PromptAiCallsInterface ): Promise<boolean|unknown> {    
         try {
 
             let jsonResponse:any = '';
@@ -800,8 +808,25 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                             return error;
                         });
                     break;
-                    case 'SitePubblication':                        
+                    case 'PromptAi':        
+                        let value2;
+                        if( saveTo.responseField !== undefined ) {
+                            value2   = jsonResponse[`${saveTo.responseField}`];
+                        } else {
+                            value2   = response;
+                        }
+                        if( typeof value2 == 'object') {
+                            value2 = JSON.stringify(value2);
+                        }                
                         
+                        const filterP = { _id: promptAi._id };
+                        const fieldP  = saveTo.field 
+                        const updateP = {[fieldP]: value2}
+                        await PromptAi.findOneAndUpdate(filterP, updateP).then(result => {
+                            
+                        }).catch(async error => {         
+                            return error;
+                        });
                     break;
                 }                
             }
@@ -931,7 +956,9 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     }
 
     /**
-     * Salva il dato nella tabella promptAI
+     * Salva il dato nella tabella promptAI nel campo data. Tecnica utilizzata per ad esempio per fare i bold. 
+     * Dove prima vengono chiesti a openai la risposta salvata nel campo data, e poi riletto e inviati assieme al testo 
+     * all'ai per fare inserire le boldate nel testo di quelle parole chiave
      */
     private async createDataSave(response: string|null, promptAi: PromptAiWithIdType, call: PromptAICallInterface, setCompleteCall:PromptAiCallsInterface, siteName:string): Promise<boolean|unknown> {
         try {
@@ -950,7 +977,8 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     dataField = promptAi.data || '';
                     break;
             }
-        
+
+
             if( response !== null ) {
                 if( dataField == '' ) {
                     dataField = [{[call.saveKey]: JSON.parse(response)}];
@@ -958,6 +986,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     dataField = dataField.map((item:any) => ({ ...item, [call.saveKey]: JSON.parse(response) }));    
                 }
             }
+            
             
             const filter            = { _id: promptAi._id };
             const update            = { [field] : dataField, calls: setCompleteCall };
