@@ -30,7 +30,8 @@ import {
     StructureChaptersData,         
     TypeMsgUserRaplace,    
     NextArticleGenerate,
-    isStructureChapter
+    isStructureChapter,
+    TypeMsgSystemRaplace
 }                                                           from './Interface/OpenAiInterface';
 import { writeErrorLog }                                    from '../Log/Log';
 import { IOpenAiService }                                   from './Interface/IOpenAiService';
@@ -362,7 +363,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                 } else if( call.saveFunction == ACTION_READ_WRITE_DYNAMIC_SCHEMA ) {
                                 
                     this.alertUtility.setCallData(alertProcess, `updateDynamicResponse: response, call, article`,false);
-                    const responseUpdate:boolean|unknown = await this.updateDynamicResponse(response, call, article, promptAi, setCompleteCall, siteName );  
+                    const responseUpdate:boolean|unknown = await this.updateDynamicResponse(response, call, article, promptAi, setCompleteCall );  
                     if( responseUpdate instanceof Error ) {
                         this.alertUtility.setError(alertProcess, `updateDynamicResponse:<br> `, false );
                         this.alertUtility.setError(alertProcess, responseUpdate );
@@ -452,7 +453,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         return true;
     }
 
-    //recupera il campo da leggere
+    //Recupera il valore dal campo settato su readTo se è un oggetto serve specificare anche lo schema altrimenti lo prende da article
     private getDinamycField(call:PromptAICallInterface,sitePublication: SitePublicationWithIdType,article:ArticleWithIdType, promptAi:PromptAiWithIdType): string|object|Error {
         try{
             if( typeof call.readTo == 'object' ) {
@@ -617,31 +618,36 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         // console.log(call);
                         // console.log("promptAi");
                         const oReplace:[TypeMsgUserRaplace]|undefined                        = call.msgUser.replace;
+                        console.log(call.msgUser.replaceSystem);
+                        const replaceSystem:[TypeMsgSystemRaplace]|undefined                 = call.msgUser.replaceSystem;
                         
                         //Gestisce il replace dinamico dei placeholder contenuti nel message di sistema 
-                        if( call.msgUser.replaceSystem !== undefined ) {                                                     
+                        if( replaceSystem !== undefined ) {                                                     
                             
                             let getResponse:string|Error = '';
                             const cmsAdminApi   = new CmsAdminApi();
 
-                            switch( call.msgUser.replaceSystem.callFunction ) {
-                                case 'getTecnicalTemplateCmsAdmin':                                    
-                                    getResponse         = await cmsAdminApi.getCmsAdminTecnicalTemplate(sitePublication,article);                              
-                                break;
-                                case 'getBacklinkSectionsCmsAdmin':                                    
-                                    getResponse         = await cmsAdminApi.getBacklinkSectionsCmsAdmin(sitePublication,article);                                    
-                                break;
-                            }
-                            if( getResponse instanceof Error ) {
-                                return getResponse;
-                            }
 
-                            if( step !== null && step.messages !== null && step.messages[0] !== null && step.messages[0].content !== null ) {                                        
-                                const placeholder:string        = `[#${call.msgUser.replaceSystem.field}#]`;
-                                // @ts-ignore
-                                step.messages[0].content        = step.messages[0].content.replace(/\\"/g, '\\"');
-                                // @ts-ignore
-                                step.messages[0].content        = step.messages[0].content.replace(placeholder, getResponse)+'.';                                        
+                            for (const itemSystemReplace of replaceSystem) {     
+                                switch( itemSystemReplace.callFunction ) {
+                                    case 'getTecnicalTemplateCmsAdmin':                                    
+                                        getResponse         = await cmsAdminApi.getCmsAdminTecnicalTemplate(sitePublication,article);                              
+                                    break;
+                                    case 'getBacklinkSectionsCmsAdmin':                                    
+                                        getResponse         = await cmsAdminApi.getBacklinkSectionsCmsAdmin(sitePublication,article);                                    
+                                    break;
+                                }
+                                if( getResponse instanceof Error ) {
+                                    return getResponse;
+                                }
+
+                                if( step !== null && step.messages !== null && step.messages[0] !== null && step.messages[0].content !== null ) {                                        
+                                    const placeholder:string        = `[#${itemSystemReplace.field}#]`;
+                                    // @ts-ignore
+                                    step.messages[0].content        = step.messages[0].content.replace(/\\"/g, '\\"');
+                                    // @ts-ignore
+                                    step.messages[0].content        = step.messages[0].content.replace(placeholder, getResponse)+'.';                                        
+                                }
                             }
                             
                         }                        
@@ -663,7 +669,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                                 const sections:string|Error = await cmsAdminApi.getSectionsCmsAdmin(sitePublication,article);
                                                 if( sections instanceof Error ) {
                                                     return sections;
-                                                }                                                
+                                                }
                                                 const placeholder:string        = `[#${itemReplace.field}#]`;
                                                 message                         = message.replace(/\\"/g, '\\"');
                                                 message                         = message.replace(placeholder, sections)+'.';
@@ -676,7 +682,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                     role:    'user', 
                                     content: message
                                 };
-                                step.messages.push(chatMessage)                                
+                                step.messages.push(chatMessage)
                             }
                         }                    
                     }
@@ -801,6 +807,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         }
                         const filter = { _id: article._id };
                         const field  = saveTo.field 
+                        //@ts-ignore
                         const update = {[field]: value}
                         await Article.findOneAndUpdate(filter, update).then(result => {
                             
@@ -821,6 +828,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         
                         const filterP = { _id: promptAi._id };
                         const fieldP  = saveTo.field 
+                        //@ts-ignore
                         const updateP = {[fieldP]: value2}
                         await PromptAi.findOneAndUpdate(filterP, updateP).then(result => {
                             
@@ -855,6 +863,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         }
                         const filter = { _id: article._id };
                         const field  = saveTo.field 
+                        //@ts-ignore
                         const update = {[field]: value}
                         await Article.findOneAndUpdate(filter, update).then(result => {
                             
@@ -972,13 +981,15 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
             
             let dataField: any = {}; // Inizializza dataField come un oggetto vuoto
         
+            
             switch (field) {
                 case 'data':                                
                     dataField = promptAi.data || '';
                     break;
             }
 
-
+            //Se nel campo specificato nel caso seguente data, è gia presente un json appende a questo oggetto
+            //il nuono risultato salvandolo con la chiave specificata in saveKey
             if( response !== null ) {
                 if( dataField == '' ) {
                     dataField = [{[call.saveKey]: JSON.parse(response)}];

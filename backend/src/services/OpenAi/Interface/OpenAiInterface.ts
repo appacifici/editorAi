@@ -6,8 +6,8 @@ import { SitePublicationWithIdType } from "../../../database/mongodb/models/Site
 const TYPE_IN_JSON:string                               = 'inJson';
 const TYPE_READ_STRUCTURE_FIELD:string                  = 'readStructureField';
 const TYPE_READ_FROM_DATA_PROMPT_AND_ARTICLE:string     = 'readStructureFieldAndArticle'; //Prende il testo dallo schema article e lo genera completando lo user message dal campo data del promptAi
-const TYPE_READ_WRITE_DYNAMIC_SCHEMA:string             = 'readWriteDimanycSchema'; //Prende il testo dallo schema article e lo genera completando lo user message dal campo data del promptAi
-const TYPE_READ_WRITE_DYNAMIC_INFO:string               = 'readWriteDimanycInfo'; //Prende il testo dallo schema article e lo genera completando lo user message dal campo data del promptAi
+const TYPE_READ_WRITE_DYNAMIC_SCHEMA:string             = 'readWriteDimanycSchema'; 
+const TYPE_READ_WRITE_DYNAMIC_INFO:string               = 'readWriteDimanycInfo'; 
 
 //Tipi di azioni(funzioni) che si possono invocare nella call
 const ACTION_CREATE_DATA_SAVE:string            = 'createDataSave'; //salvataggio in campo data promptAi
@@ -73,7 +73,7 @@ interface PromptAICallInterface {
         message:     string  //Se il type è uno di quelli semplici lo user message è stampato direttamente qui dentro
         readKey?:    string //Dato il campo sopra specifica quale sia la chiave del json
         replace?:    [TypeMsgUserRaplace] //Se fa effettuato i replace sul user message
-        replaceSystem?: TypeMsgSystemRaplace //Se fa effettuato i replace sul system message
+        replaceSystem?: [TypeMsgSystemRaplace] //Se fa effettuato i replace sul system message
     };
     complete:       number; //se la call è stata eseguita è 1
 }
@@ -106,6 +106,7 @@ export {
     StructureChapter, 
     StructureChaptersData, 
     TypeSavaToObject,
+    TypeMsgSystemRaplace,
     isStructureChapter,
     TYPE_IN_JSON, 
     TYPE_READ_STRUCTURE_FIELD,
