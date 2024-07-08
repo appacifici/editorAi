@@ -277,7 +277,7 @@ class WordpressApi extends BaseAlert{
         const sitePublication: SitePublicationWithIdType | null = await SitePublication.findOne({ sitePublication: siteName });
         if(sitePublication === null ) {  
             console.log('SitePublication == null');
-            //await writeErrorLog(siteName + '- getInfoPromptAi: promptAi == null: siteName:' + siteName+ ' promptAiId:'+promptAiId);
+            //await writeErrorLog(siteName + '- runPromptAiArticle: promptAi == null: siteName:' + siteName+ ' promptAiId:'+promptAiId);
             this.alertUtility.setError(alertProcess, 'SitePublication.findOne:<br> SitePublication == null', false);                
             this.alertUtility.setError(alertProcess, siteName);                 
             return false;                

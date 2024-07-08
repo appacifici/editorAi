@@ -23,7 +23,7 @@ const runCron = async() => {
 					const alertProcess:string               			= openAiService.alertUtility.initProcess(processLabel); //. date('YmdHis')
 					openAiService.alertUtility.setLimitWrite(60000);
 
-					await openAiService.getInfoPromptAi(alertProcess, processName, sitePublicationName, sitePublication.promptAiId, 0,null);
+					await openAiService.runPromptAiArticle(alertProcess, processName, sitePublicationName, sitePublication.promptAiId, 0,null);
 					await openAiService.alertUtility.write(alertProcess, processName, nextArticleGenerate.site.site, sitePublicationName, nextArticleGenerate.article._id);
 				}
 			},

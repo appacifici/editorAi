@@ -414,6 +414,14 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 									</Form.Group>
 								</Col>		
 							</Row>
+							<Row className={articleStyle.row2}>																
+								<Col>
+									<Form.Group controlId="formKeywords">
+										<Form.Label>Keywords</Form.Label>
+										<Form.Control name="keywords" as="textarea" placeholder="keywords" defaultValue={articleData ? articleData.keywords as string : ''} />										
+									</Form.Group>
+								</Col>		
+							</Row>
 							<Row className={articleStyle.row2}>								
 								<Col>
 									<Form.Group controlId="formSend">

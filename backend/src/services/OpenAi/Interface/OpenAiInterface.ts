@@ -17,6 +17,7 @@ const ACTION_WRITE_TOTAL_ARTICLE:string         = 'writeTotalArticle'; //Salvata
 const ACTION_CALLS_COMPLETE:string              = 'callsCompete'; //Tutte le calls eseguite
 const ACTION_READ_WRITE_DYNAMIC_SCHEMA:string   = 'readWriteDimanycSchema'; //Tutte le calls eseguite
 const ACTION_READ_WRITE_DYNAMIC_SECTION:string  = 'readWriteDinamycSection'; //Tutte le calls eseguite
+const ACTION_GET_RESPONSE_COMPLETE:string       = 'getResponseComplete'; //Da chiamare dopo il complete se si vuole il return dei dati
 
 interface NextArticleGenerate {
     sitePublication: SitePublicationWithIdType;
@@ -119,5 +120,6 @@ export {
     ACTION_WRITE_TOTAL_ARTICLE,
     ACTION_CALLS_COMPLETE,
     ACTION_READ_WRITE_DYNAMIC_SCHEMA,
-    ACTION_READ_WRITE_DYNAMIC_SECTION
+    ACTION_READ_WRITE_DYNAMIC_SECTION,
+    ACTION_GET_RESPONSE_COMPLETE
 };

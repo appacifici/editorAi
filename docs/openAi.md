@@ -104,6 +104,7 @@
 * **response_format**:
     * **text**: Risposta testuale
     * **JSON**: Garantisce che l'output sia un JSON valido, facilitando l'elaborazione automatizzata del testo generato.
+    * **JSON**: Garantisce che l'output sia un JSON valido, facilitando l'elaborazione automatizzata del testo generato.
     * **finish_reason="length"**: significa che la generazione ha superato max_tokens
 
 * **seed**:

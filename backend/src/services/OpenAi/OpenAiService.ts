@@ -18,8 +18,7 @@ import {
     ACTION_WRITE_BODY_ARTICLE,
     ACTION_WRITE_TOTAL_ARTICLE,
     ACTION_CALLS_COMPLETE,
-    ACTION_READ_WRITE_DYNAMIC_SCHEMA,
-    ACTION_READ_WRITE_DYNAMIC_SECTION,
+    ACTION_READ_WRITE_DYNAMIC_SCHEMA, 
     TYPE_IN_JSON, 
     TYPE_READ_STRUCTURE_FIELD, 
     TYPE_READ_FROM_DATA_PROMPT_AND_ARTICLE,
@@ -31,7 +30,8 @@ import {
     TypeMsgUserRaplace,    
     NextArticleGenerate,
     isStructureChapter,
-    TypeMsgSystemRaplace
+    TypeMsgSystemRaplace,
+    ACTION_GET_RESPONSE_COMPLETE
 }                                                           from './Interface/OpenAiInterface';
 import { writeErrorLog }                                    from '../Log/Log';
 import { IOpenAiService }                                   from './Interface/IOpenAiService';
@@ -77,56 +77,88 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         }
     }
 
+    /*
+    * Metodo per sfrutturare il sistema di prompt ma senza lavorare necessariamente con un article  
+    */
+    public async runPromptAiGeneric(alertProcess:string, processName:string, siteName: string, promptAiId:string, articleId:string|null|undefined ): Promise<boolean|string|object> {
+        if( typeof articleId === 'string' ) {
+            this.alertUtility.setCallData(alertProcess, `Article.findOne({ _id: ${articleId} })`);
+            const article:ArticleWithIdType | null = await Article.findOne({ _id: articleId}) as ArticleWithIdType | null;           
+            if(article === null || article === null ) {  
+                console.log('runPromptAiGeneric: Article == null');            
+                this.alertUtility.setError(alertProcess, 'Article.findOne:<br> Article == null', true);                
+                return false;                
+            }
+            this.alertUtility.setCallResponse(alertProcess, `Article.findOne:`, false);                 
+            this.alertUtility.setCallResponse(alertProcess, article);                 
+            return await this.runPromptAiArticle(alertProcess,processName,siteName,promptAiId,0,article);
+        } else {
+            return this.runPromptAiArticle(alertProcess,processName,siteName,promptAiId,0,undefined);
+        }                        
+    }
+
+
+
+    
     /* 
         Processo principale per la generazione 
     */
-    public async getInfoPromptAi(alertProcess:string, processName:string, siteName: string, promptAiId:string, generateValue: number, articleGenerate:ArticleWithIdType|null): Promise<boolean> {
+    public async runPromptAiArticle(alertProcess:string, processName:string, siteName: string, promptAiId:string, generateValue: number, articleGenerate:ArticleWithIdType|null|undefined): Promise<boolean|string|object> {
 
         //Recupera la logina di generazione in base al sito su cui pubblicare
-        this.alertUtility.setCallData(alertProcess, `PromptAi.findOne:<br> ${siteName}, _id: ${promptAiId}`);
+        this.alertUtility.setCallData(alertProcess, `PromptAi.findOne::<br>`,false);
+        this.alertUtility.setCallData(alertProcess, siteName,false);
+        this.alertUtility.setCallData(alertProcess, promptAiId);
         const promptAi: PromptAiWithIdType| null                        = await PromptAi.findOne({sitePublication: siteName, _id: promptAiId});   
         if(promptAi == null ) {  
-            console.log('getInfoPromptAi: promptAi == null');
-            //await writeErrorLog(siteName + '- getInfoPromptAi: promptAi == null: siteName:' + siteName+ ' promptAiId:'+promptAiId);
-            this.alertUtility.setError(alertProcess, 'PromptAi.findOne:<br> promptAi == null', true);                
+            this.alertUtility.setError(alertProcess, 'PromptAi.findOne::<br> promptAi == null', true);                
             return false;                
         }
-        this.alertUtility.setCallResponse(alertProcess, `PromptAi.findOne:<br>`, false);
-        this.alertUtility.setCallResponse(alertProcess, promptAi, true);
+        this.alertUtility.setCallResponse(alertProcess, 'PromptAi.findOne::<br>', false);
+        this.alertUtility.setCallResponse(alertProcess, promptAi);
 
         //------------------------------------------------------------------------------------------------------------//
 
         //Recupero la chiamata da fare definita nel db promptAi
-        this.alertUtility.setCallData(alertProcess, `getCurrentCall`, false);
+        this.alertUtility.setCallData(alertProcess, `getCurrentCall2`, false);
         this.alertUtility.setCallData(alertProcess, promptAi);
         const call:PromptAICallInterface|null                           = this.getCurrentCall(promptAi);            
         if(call == null ) {  
-            this.alertUtility.setError(alertProcess, 'getCurrentCall:<br> call == null');
+            this.alertUtility.setError(alertProcess, 'getCurrentCall2:<br> call == null');
             // await writeErrorLog('getCurrentCall: '+siteName + '- call == null: promptAiId:'+promptAiId);
             return false;                
         }
-        this.alertUtility.setCallResponse(alertProcess, `getCurrentCall:<br>`, false);
+        this.alertUtility.setCallResponse(alertProcess, `getCurrentCall2:<br>`, false);
         this.alertUtility.setCallResponse(alertProcess, call);
 
         //------------------------------------------------------------------------------------------------------------//
         
         this.alertUtility.setCallData(alertProcess, `SitePublication.findOne({sitePublication: ${siteName}}) `);
         const sitePublication: SitePublicationWithIdType | null         = await SitePublication.findOne({sitePublication: siteName});
-
-        let article:ArticleWithIdType | null = null;
-        if( articleGenerate === null ) {
-            this.alertUtility.setCallData(alertProcess, `Article.findOne({ sitePublication: ${sitePublication?._id}, genarateGpt: ${generateValue} })`);
-            article                          = await Article.findOne({ sitePublication: sitePublication?._id.toString(), genarateGpt: generateValue }).sort({ lastMod: 1 }) as ArticleWithIdType | null;            
-        } else {
-            article = articleGenerate;
-        }
-        if( sitePublication === null || article === null ) {
-            this.alertUtility.setError(alertProcess, 'sitePublication === null || article === null');                
+        if( sitePublication === null ) {
+            this.alertUtility.setError(alertProcess, 'sitePublication === null');                
             return false;
-        }            
-
+        } 
         this.alertUtility.setCallResponse(alertProcess, `Article:<br>`, false);
-        this.alertUtility.setCallResponse(alertProcess, article);
+        this.alertUtility.setCallResponse(alertProcess, sitePublication);
+
+        //Se undefined significa che viene inviato dalla funzione GENERIC runPromptAiGeneric
+        let article:ArticleWithIdType | null | undefined = undefined;
+        if( articleGenerate !== undefined ) {            
+            if( articleGenerate === null ) {
+                this.alertUtility.setCallData(alertProcess, `Article.findOne({ sitePublication: ${sitePublication?._id}, genarateGpt: ${generateValue} })`);
+                article                          = await Article.findOne({ sitePublication: sitePublication?._id.toString(), genarateGpt: generateValue }).sort({ lastMod: 1 }) as ArticleWithIdType | null;            
+            } else {
+                article = articleGenerate;
+            }
+            if( article === null ) {
+                this.alertUtility.setError(alertProcess, 'article === null');                
+                return false;
+            }            
+
+            this.alertUtility.setCallResponse(alertProcess, `Article:<br>`, false);
+            this.alertUtility.setCallResponse(alertProcess, article);
+        }
         
 
         //------------------------------------------------------------------------------------------------------------//
@@ -136,7 +168,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         this.alertUtility.setCallData(alertProcess, call, false);
         this.alertUtility.setCallData(alertProcess, sitePublication, false);
         this.alertUtility.setCallData(alertProcess, article);            
-        text = this.getDinamycField(call,sitePublication, article, promptAi);                            
+        text = this.getDinamycField(call,sitePublication, promptAi, article);                            
         if( text instanceof Error ) {
             this.alertUtility.setError(alertProcess, `getDinamycField2:<br> `, false );
             this.alertUtility.setError(alertProcess, text );
@@ -232,7 +264,11 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
 
                 //Salvataggio Diretto del body
                 } else if( call.saveFunction == ACTION_WRITE_TOTAL_ARTICLE ) {
-                                    
+                    if( article === undefined ) {
+                        this.alertUtility.setError(alertProcess, 'article === undefined (chiamata partita da genericAI) ');                
+                        return false;
+                    }   
+
                     this.alertUtility.setCallData(alertProcess, `updateSchemaArticle:<br> `);
                     const responseUpdate:boolean| unknown = await this.updateSchemaArticle(response, call, article );  
                     if( responseUpdate instanceof Error ) {
@@ -257,6 +293,11 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     
 
                 } else if( call.saveFunction == ACTION_WRITE_BODY_ARTICLE ) {         
+                    if( article === undefined ) {
+                        this.alertUtility.setError(alertProcess, 'article === undefined (chiamata partita da genericAI) ');                
+                        return false;
+                    }
+
                     this.alertUtility.setCallData(alertProcess, `updateSchemaArticle: response, call, article <br> `);
                     const responseUpdate:boolean| unknown = await this.updateSchemaArticle(response, call, article );  
                     if( responseUpdate instanceof Error ) {
@@ -280,6 +321,11 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                 
                 //Salvataggio capitolo in body
                 } else if( call.saveFunction == ACTION_UPDATE_SCHEMA_ARTICLE ) {
+                    if( article === undefined ) {
+                        this.alertUtility.setError(alertProcess, 'article === undefined (chiamata partita da genericAI) ');                
+                        return false;
+                    }
+
                     //Recupero il capitolo corrente gestisto
                     const chiave                                            = call.msgUser.field.toString();
                     const data:StructureChaptersData                        = (promptAi as any)[chiave];                    
@@ -318,8 +364,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         this.alertUtility.setError(alertProcess, `PromptAi.findByIdAndUpdate:<br> `, false );
                         this.alertUtility.setError(alertProcess, error );
                         return false;
-                    }  
-
+                    }                      
 
                     //Appenda il capitolo nel caso di generazione da struttura definita
                     const sc = structureChapter as StructureChapter;
@@ -355,15 +400,19 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                             console.log('Articolo generato correttamente e completato con successo.');
                         } catch (error) {
                             console.error('Si è verificato un errore durante l\'aggiornamento:', error);
-                            await writeErrorLog('getInfoPromptAi: '+ACTION_UPDATE_SCHEMA_ARTICLE+' :Si è verificato un errore durante l\'aggiornamento - siteName:' + siteName+ ' promptAiId:'+promptAiId);
+                            await writeErrorLog('runPromptAiArticle: '+ACTION_UPDATE_SCHEMA_ARTICLE+' :Si è verificato un errore durante l\'aggiornamento - siteName:' + siteName+ ' promptAiId:'+promptAiId);
                             await writeErrorLog(error);
                         }
                     }
 
                 } else if( call.saveFunction == ACTION_READ_WRITE_DYNAMIC_SCHEMA ) {
-                                
-                    this.alertUtility.setCallData(alertProcess, `updateDynamicResponse: response, call, article`,false);
-                    const responseUpdate:boolean|unknown = await this.updateDynamicResponse(response, call, article, promptAi, setCompleteCall );  
+                    
+                    this.alertUtility.setCallData(alertProcess, `updateDynamicResponse: response, call, promptAi, article`,false);
+                    this.alertUtility.setCallData(alertProcess, response,false);             
+                    this.alertUtility.setCallData(alertProcess, call,false);             
+                    this.alertUtility.setCallData(alertProcess, promptAi,false);      
+                    this.alertUtility.setCallData(alertProcess, article);      
+                    const responseUpdate:boolean|unknown = await this.updateDynamicResponse(response, call, promptAi, article );  
                     if( responseUpdate instanceof Error ) {
                         this.alertUtility.setError(alertProcess, `updateDynamicResponse:<br> `, false );
                         this.alertUtility.setError(alertProcess, responseUpdate );
@@ -388,38 +437,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         return false;
                     }
                     this.alertUtility.setCallResponse(alertProcess, `createDataSave: OK`);                        
-                    console.log('Salvataggio generato correttamente e completato con successo.');
-
-                } else if( call.saveFunction == ACTION_READ_WRITE_DYNAMIC_SECTION ) {
-                                
-                    this.alertUtility.setCallData(alertProcess, `updateDynamicSectionResponse: response, call, article`,false);
-                    const responseUpdate:boolean|unknown = await this.updateDynamicSectionResponse(response, call, article );  
-                    if( responseUpdate instanceof Error ) {
-                        this.alertUtility.setError(alertProcess, `updateDynamicSectionResponse:<br> `, false );
-                        this.alertUtility.setError(alertProcess, responseUpdate );
-                        return false;
-                    }
-                    if( responseUpdate === false ) {    
-                        this.alertUtility.setError(alertProcess, `updateDynamicSectionResponse: false ` );
-                        return false;
-                    }
-                    this.alertUtility.setCallResponse(alertProcess, `updateDynamicSectionResponse:${responseUpdate}`); 
-                                                    
-                        
-                    this.alertUtility.setCallData(alertProcess, `createDataSave: `,false);             
-                    this.alertUtility.setCallData(alertProcess, promptAi,false);             
-                    this.alertUtility.setCallData(alertProcess, call,false);             
-                    this.alertUtility.setCallData(alertProcess, setCompleteCall,false);             
-                    this.alertUtility.setCallData(alertProcess, siteName);             
-                    const createDataSave:boolean|unknown = await this.createDataSave(null, promptAi, call, setCompleteCall, siteName );    
-                    if( createDataSave instanceof Error ) {
-                        this.alertUtility.setError(alertProcess, `createDataSave:<br> `, false );
-                        this.alertUtility.setError(alertProcess, createDataSave );
-                        return false;
-                    }
-                    this.alertUtility.setCallResponse(alertProcess, `createDataSave: OK`);                        
-                    console.log('Salvataggio generato correttamente e completato con successo.');
-                    
+  
 
                 //Chiusura chiamate calls e salvataggio articolo a complete 1
                 } else if( call.saveFunction == ACTION_CALLS_COMPLETE ) {
@@ -434,17 +452,45 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     this.alertUtility.setCallResponse(alertProcess, `setAllCallUncomplete: OK`); 
                 
 
-                    this.alertUtility.setCallData(alertProcess, `setArticleComplete: `,false);       
-                    this.alertUtility.setCallData(alertProcess, article,false);     
-                    this.alertUtility.setCallData(alertProcess, promptAi);     
-                    const setArticleComplete:boolean|Error = await this.setArticleComplete(article, promptAi);
-                    if( setArticleComplete instanceof Error ) {
-                        this.alertUtility.setError(alertProcess, `setArticleComplete:<br> `, false );
-                        this.alertUtility.setError(alertProcess, setArticleComplete );
+                    if( article !== undefined ) {
+                        this.alertUtility.setCallData(alertProcess, `setArticleComplete: `,false);       
+                        this.alertUtility.setCallData(alertProcess, article,false);     
+                        this.alertUtility.setCallData(alertProcess, promptAi);     
+                        const setArticleComplete:boolean|Error = await this.setArticleComplete(article, promptAi);
+                        if( setArticleComplete instanceof Error ) {
+                            this.alertUtility.setError(alertProcess, `setArticleComplete:<br> `, false );
+                            this.alertUtility.setError(alertProcess, setArticleComplete );
+                            return false;
+                        }
+                        this.alertUtility.setCallResponse(alertProcess, `setArticleComplete: OK`); 
+                    }
+                
+                } else if( call.saveFunction == ACTION_GET_RESPONSE_COMPLETE ) {             
+                    let text:string|object|Error;            
+                    this.alertUtility.setCallData(alertProcess, `getResponse:<br> Call  - SitePubblication  - Article`, false);
+                    this.alertUtility.setCallData(alertProcess, call, false);
+                    this.alertUtility.setCallData(alertProcess, sitePublication, false);
+                    this.alertUtility.setCallData(alertProcess, article);            
+                    text = this.getDinamycField(call,sitePublication, promptAi, article);                            
+                    if( text instanceof Error ) {
+                        this.alertUtility.setError(alertProcess, `getResponse:<br> `, false );
+                        this.alertUtility.setError(alertProcess, text );
                         return false;
                     }
-                    this.alertUtility.setCallResponse(alertProcess, `setArticleComplete: OK`); 
+                    this.alertUtility.setCallResponse(alertProcess, `getResponse`, false);
+                    this.alertUtility.setCallResponse(alertProcess, text);
 
+                    this.alertUtility.setCallData(alertProcess, `setAllCallUncomplete: `,false);                                
+                    this.alertUtility.setCallData(alertProcess, promptAi);     
+                    const setAllCallUncomplete:Promise<boolean|Error> = this.setAllCallUncomplete(promptAi);
+                    if( setAllCallUncomplete instanceof Error ) {
+                        this.alertUtility.setError(alertProcess, `setAllCallUncomplete:<br> `, false );
+                        this.alertUtility.setError(alertProcess, setAllCallUncomplete );
+                        return false;
+                    }
+                    this.alertUtility.setCallResponse(alertProcess, `setAllCallUncomplete: OK`); 
+
+                    return text;              
                 }                                                                                                                       
             }
                                             
@@ -454,14 +500,16 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     }
 
     //Recupera il valore dal campo settato su readTo se è un oggetto serve specificare anche lo schema altrimenti lo prende da article
-    private getDinamycField(call:PromptAICallInterface,sitePublication: SitePublicationWithIdType,article:ArticleWithIdType, promptAi:PromptAiWithIdType): string|object|Error {
+    private getDinamycField(call:PromptAICallInterface,sitePublication: SitePublicationWithIdType, promptAi:PromptAiWithIdType, article?:ArticleWithIdType): string|object|Error {
         try{
             if( typeof call.readTo == 'object' ) {
                 let response:any = {};         
                 for (const readTo of call.readTo) {                
                     switch( readTo.schema ) {
                         case 'Article':
-                            response[`${readTo.field}`] = typeof article[`${readTo.field}`] == 'object' ? JSON.stringify(article[`${readTo.field}`] ) : article[`${readTo.field}`] ;
+                            if( article !== undefined) {
+                                response[`${readTo.field}`] = typeof article[`${readTo.field}`] == 'object' ? JSON.stringify(article[`${readTo.field}`] ) : article[`${readTo.field}`] ;
+                            }
                         break;
                         case 'SitePubblication':                        
                             response[`${readTo.field}`] = typeof sitePublication[`${readTo.field}`] == 'object' ? JSON.stringify(sitePublication[`${readTo.field}`]) : sitePublication[`${readTo.field}`];
@@ -474,14 +522,16 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                 }                
                 return response;
             } else {
-
-                //Questw funzioni sul testo vengono attivate o disattivare dai settings della call 
-                let text:string|undefined  = this.unifyString(article[`${call.readTo}`]);                        
-                if( call.removeHtmlTags === true ) {
-                    //Deve però rimuovere sempre i tag img
-                    text = this.removeHtmlTags(article[`${call.readTo}`]);
+                if( article !== undefined) {
+                    //Questw funzioni sul testo vengono attivate o disattivare dai settings della call 
+                    let text:string|undefined  = this.unifyString(article[`${call.readTo}`]);                        
+                    if( call.removeHtmlTags === true ) {
+                        //Deve però rimuovere sempre i tag img
+                        text = this.removeHtmlTags(article[`${call.readTo}`]);
+                    }
+                    return text;
                 }
-                return text;
+                return '';
             }
         } catch (error: unknown) {                     
             if (isError(error)) {
@@ -533,7 +583,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         promptAi: PromptAiWithIdType,
         title:string|any,
         sitePublication: SitePublicationWithIdType,
-        article:ArticleWithIdType
+        article?:ArticleWithIdType
     ): Promise<ChatCompletionCreateParamsNonStreaming|Error> {            
         try{
             switch( call.msgUser.type ) {
@@ -630,10 +680,15 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
 
                             for (const itemSystemReplace of replaceSystem) {     
                                 switch( itemSystemReplace.callFunction ) {
-                                    case 'getTecnicalTemplateCmsAdmin':                                    
+                                    case 'getTecnicalTemplateCmsAdmin':           
+                                        //TODO: Assicurarsi che in caso article non venga passato sui log se ne abbia evidenta
+                                        //In teoria in questo punto senza article non ci dovrebbe arrivare in quanto se è article undefined significa che il processo
+                                        //è partito dal generic
+                                        //@ts-ignore                         
                                         getResponse         = await cmsAdminApi.getCmsAdminTecnicalTemplate(sitePublication,article);                              
                                     break;
                                     case 'getBacklinkSectionsCmsAdmin':                                    
+                                        //@ts-ignore
                                         getResponse         = await cmsAdminApi.getBacklinkSectionsCmsAdmin(sitePublication,article);                                    
                                     break;
                                 }
@@ -666,6 +721,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                         const cmsAdminApi = new CmsAdminApi();
                                         switch(itemReplace.callFunction) {
                                             case 'getSectionsCmsAdmin':
+                                                //@ts-ignore
                                                 const sections:string|Error = await cmsAdminApi.getSectionsCmsAdmin(sitePublication,article);
                                                 if( sections instanceof Error ) {
                                                     return sections;
@@ -779,7 +835,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     /**
      * Salva il dato in update nella tabella Article
      */
-    private async updateDynamicResponse(response: string, call: PromptAICallInterface, article:ArticleWithIdType, promptAi: PromptAiWithIdType, setCompleteCall:PromptAiCallsInterface ): Promise<boolean|unknown> {    
+    private async updateDynamicResponse(response: string, call: PromptAICallInterface, promptAi: PromptAiWithIdType, article?:ArticleWithIdType ): Promise<boolean|unknown> {    
         try {
 
             let jsonResponse:any = '';
@@ -796,6 +852,9 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
             for (const saveTo of call.saveTo) {                
                 switch( saveTo.schema ) {
                     case 'Article':
+                        if( article == undefined ) {
+                            return new Error('Article undefined - chiamata partitta dal genericAI');
+                        }
                         let value;
                         if( saveTo.responseField !== undefined ) {
                             value   = jsonResponse[`${saveTo.responseField}`];
@@ -835,44 +894,6 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         }).catch(async error => {         
                             return error;
                         });
-                    break;
-                }                
-            }
-        } catch (error: unknown) {            
-            return error;
-        }                
-        return true;        
-    }
-
-     /**
-     * Salva il dato in update nella tabella Article
-     */
-     private async updateDynamicSectionResponse(response: string, call: PromptAICallInterface, article:ArticleWithIdType): Promise<boolean|unknown> {    
-        try {
-            const jsonResponse:any = JSON.parse(response);
-            if( typeof call.saveTo === 'string' ) {
-                return false;
-            }
-            
-            for (const saveTo of call.saveTo) {                
-                switch( saveTo.schema ) {
-                    case 'Article':
-                        let value   = jsonResponse[`${saveTo.responseField}`];
-                        if( typeof value == 'object') {
-                            value = JSON.stringify(value);
-                        }
-                        const filter = { _id: article._id };
-                        const field  = saveTo.field 
-                        //@ts-ignore
-                        const update = {[field]: value}
-                        await Article.findOneAndUpdate(filter, update).then(result => {
-                            
-                        }).catch(async error => {         
-                            return error;
-                        });
-                    break;
-                    case 'SitePubblication':                        
-                        
                     break;
                 }                
             }
@@ -1013,7 +1034,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     /**
      * Recupera la chiamata che deve essere effettuata da inviare a OpenAi     
      */
-    public getCurrentCall(promptAi: PromptAiWithIdType): PromptAICallInterface | null {
+    private getCurrentCall(promptAi: PromptAiWithIdType): PromptAICallInterface | null {
         const calls: PromptAiCallsInterface = promptAi.calls as PromptAiCallsInterface;
 
         for (let i = 0; i < calls.length; i++) {
@@ -1028,7 +1049,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
      /**
      * Setta il complete della call ad 1     
      */
-     public setCompleteCall(promptAi: PromptAiWithIdType,key:string): PromptAiCallsInterface | Error {
+    private setCompleteCall(promptAi: PromptAiWithIdType,key:string): PromptAiCallsInterface | Error {
         try {
             const calls: PromptAiCallsInterface = promptAi.calls as PromptAiCallsInterface;        
 
@@ -1080,7 +1101,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     /**
      * Recupera il ChatCompletionCreateParamsNonStreaming dello step attuale     
      */
-    public getCurrentStep(promptAi: PromptAiWithIdType, call:string): ChatCompletionCreateParamsNonStreaming|null|Error {
+    private getCurrentStep(promptAi: PromptAiWithIdType, call:string): ChatCompletionCreateParamsNonStreaming|null|Error {
         try {
             const steps: any = promptAi.steps;                                   
             for (const item of steps) {            
@@ -1101,7 +1122,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     }
     
     //Effettua la chiamata ad OpenAi
-    public async runChatCompletitions(chatCompletionParam:ChatCompletionCreateParamsNonStreaming): Promise<string | unknown> {
+    private async runChatCompletitions(chatCompletionParam:ChatCompletionCreateParamsNonStreaming): Promise<string | unknown> {
         try {      
             if (chatCompletionParam) {                                                
                 console.log(chatCompletionParam);
@@ -1140,13 +1161,21 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
         return $.text().trim();
       }
 
-    public sleep(ms:any) {
+    private sleep(ms:any) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
 }
 
 // const c = new OpenAiService();
-// c.getInfoPromptAi('acquistigiusti.it', 'Come scegliere un cardiofrequenzimetro');
+// c.runPromptAiArticle('acquistigiusti.it', 'Come scegliere un cardiofrequenzimetro');
 
 export default OpenAiService;
+
+
+
+
+//TODO: Spostare la call getKeywords getKeywords e getKeywordsAdd fuori dal prompt della generazione perche vanno invotate dal comparatore quando si crea una nuova categoria, quindi dovrà esserci un endPoint dedicato
+//TODO: La call getKeywordArticle dovra leggere le keyword di categoria richiedendole tramite chiamata endPoint al comparatore 
+//TODO: La getArticle è stata comabiata usando il readWriteDimanycSchema, quindi fa aggiungo una nuova funzione nel dinamyc per salvare il metaTitle metaDescription e bodyGpt in un unica volta 
+//TODO: Il todo sopra se faccio questo non lo devo fare. Creare nuova call per generare meta title e descript con le keywords

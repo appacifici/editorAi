@@ -6,7 +6,8 @@ import { SitePublicationWithIdType }                        from '../../../datab
 
 interface IOpenAiService {
     getNextArticleGenerate(siteName: string, generateValue: number): Promise<NextArticleGenerate|null>;
-    getInfoPromptAi(alertProcess:string, processName:string, siteName: string, promptAiId: string, generateValue: number, articleGenerate:ArticleWithIdType|null): Promise<boolean>;    
+    runPromptAiGeneric(alertProcess:string, processName:string, siteName: string, promptAiId:string, articleId:string|null|undefined): Promise<boolean|string|object>;    
+    runPromptAiArticle(alertProcess:string, processName:string, siteName: string, promptAiId: string, generateValue: number, articleGenerate:ArticleWithIdType|null): Promise<boolean|string|object>;    
 }
 
 export { IOpenAiService };

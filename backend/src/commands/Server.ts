@@ -10,6 +10,7 @@ import OpenAiService from '../services/OpenAi/OpenAiService';
 import WordpressApi from '../services/WordpressApi';
 import DinamycScraper from '../siteScrapers/api/DinamycScraper';
 import SocketServer from '../services/Socket/SocketServer';
+import { bool } from 'sharp';
 
 connectMongoDB();
 
@@ -41,6 +42,9 @@ app.get('/api/alerts/:id', async (req, res) => {
 		res.status(500).json({ error: 'Errore durante il recupero dei dati dell\'alert' });
 	}
 });
+
+// ########### ########### ########### KEYWORDS ########### ########### ###########
+
 
 // ########### ########### ########### SITE ########### ########### ###########
 
@@ -397,11 +401,46 @@ app.get('/api/promptAi/generateAi/:id/:promptId', async (req, res) => {
 				const alertProcess: string = openAiService.alertUtility.initProcess(processLabel); //. date('YmdHis')
 				openAiService.alertUtility.setLimitWrite(60000); 
 
-				await openAiService.getInfoPromptAi(alertProcess, processName, sitePublication.sitePublication,req.params.promptId, 0, articleGenerate);
+				await openAiService.runPromptAiArticle(alertProcess, processName, sitePublication.sitePublication,req.params.promptId, 0, articleGenerate);
 				await openAiService.alertUtility.write(alertProcess, processName, site.site, sitePublication.sitePublication, articleGenerate._id);
 				const promptAi = await PromptAi.findById(req.params.promptId);
 				return res.status(200).send({'success':true, data: promptAi});			
 			}
+			return res.status(200).send({'success':false});  
+		}		
+		
+	} catch (error) {
+		console.error('Errore durante l\'esecuzione del comando:', error);
+		return res.status(200).send({'success':false});
+	} 
+});
+
+app.get('/api/promptAi/generateGenericAI/:promptId/:spId', async (req, res) => {
+	try {
+		
+		const openAiService: OpenAiService 				= new OpenAiService();		
+		const sitePublication:SitePublicationWithIdType | null 	= await SitePublication.findOne({ _id: req.params.spId }) as SitePublicationWithIdType | null;    
+		if( sitePublication === null ) {
+			return res.status(200).send({'success':false});
+		}  else {			
+			
+
+				const processName: string  = `generateGptArticle`;
+				const processLabel: string = `generateGptArticle ${sitePublication.sitePublication} ${sitePublication._id}`;
+				const alertProcess: string = openAiService.alertUtility.initProcess(processLabel); //. date('YmdHis')
+				openAiService.alertUtility.setLimitWrite(60000); 
+
+				let response:string|boolean|object = false;
+				for( var x = 0; x < 10; x++ ) {
+					if( typeof response === 'boolean' ) {
+						response = await openAiService.runPromptAiGeneric(alertProcess, processName, sitePublication.sitePublication,req.params.promptId, undefined);
+					}
+				}
+				
+				await openAiService.alertUtility.write(alertProcess, processName, sitePublication.sitePublication, sitePublication.sitePublication);
+				
+				return res.status(200).send({'success':true, data: response});			
+			
 			return res.status(200).send({'success':false});  
 		}		
 		
