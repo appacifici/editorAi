@@ -48,6 +48,7 @@ function isError(e: any): e is Error {
 
 class OpenAiService extends BaseAlert implements IOpenAiService{
     htmlText:string;
+    replaces:object;
 
     openai  = new OpenAI({baseURL:process.env.OPENAI_BASE_URL, apiKey:process.env.OPENAI_API_KEY});
     md      = new MarkdownIt();    
@@ -55,6 +56,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     constructor() {
         super();
         this.htmlText = '';
+        this.replaces = {};
         connectMongoDB();
     }
 
@@ -80,7 +82,9 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     /*
     * Metodo per sfrutturare il sistema di prompt ma senza lavorare necessariamente con un article  
     */
-    public async runPromptAiGeneric(alertProcess:string, processName:string, siteName: string, promptAiId:string, articleId:string|null|undefined ): Promise<boolean|string|object> {
+    public async runPromptAiGeneric(alertProcess:string, processName:string, siteName: string, promptAiId:string, articleId:string|null|undefined, replaces?:object ): Promise<boolean|string|object> {
+        this.replaces = replaces !== undefined ? replaces : {};            
+
         if( typeof articleId === 'string' ) {
             this.alertUtility.setCallData(alertProcess, `Article.findOne({ _id: ${articleId} })`);
             const article:ArticleWithIdType | null = await Article.findOne({ _id: articleId}) as ArticleWithIdType | null;           
@@ -90,7 +94,8 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                 return false;                
             }
             this.alertUtility.setCallResponse(alertProcess, `Article.findOne:`, false);                 
-            this.alertUtility.setCallResponse(alertProcess, article);                 
+            this.alertUtility.setCallResponse(alertProcess, article);        
+                        
             return await this.runPromptAiArticle(alertProcess,processName,siteName,promptAiId,0,article);
         } else {
             return this.runPromptAiArticle(alertProcess,processName,siteName,promptAiId,0,undefined);
@@ -471,7 +476,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     this.alertUtility.setCallData(alertProcess, call, false);
                     this.alertUtility.setCallData(alertProcess, sitePublication, false);
                     this.alertUtility.setCallData(alertProcess, article);            
-                    text = this.getDinamycField(call,sitePublication, promptAi, article);                            
+                    text = this.getDinamycField(call,sitePublication, promptAi, article);                          
                     if( text instanceof Error ) {
                         this.alertUtility.setError(alertProcess, `getResponse:<br> `, false );
                         this.alertUtility.setError(alertProcess, text );
@@ -480,21 +485,20 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     this.alertUtility.setCallResponse(alertProcess, `getResponse`, false);
                     this.alertUtility.setCallResponse(alertProcess, text);
 
-                    this.alertUtility.setCallData(alertProcess, `setAllCallUncomplete: `,false);                                
-                    this.alertUtility.setCallData(alertProcess, promptAi);     
-                    const setAllCallUncomplete:Promise<boolean|Error> = this.setAllCallUncomplete(promptAi);
-                    if( setAllCallUncomplete instanceof Error ) {
-                        this.alertUtility.setError(alertProcess, `setAllCallUncomplete:<br> `, false );
-                        this.alertUtility.setError(alertProcess, setAllCallUncomplete );
-                        return false;
-                    }
-                    this.alertUtility.setCallResponse(alertProcess, `setAllCallUncomplete: OK`); 
+                    // this.alertUtility.setCallData(alertProcess, `setAllCallUncomplete: `,false);                                
+                    // this.alertUtility.setCallData(alertProcess, promptAi);     
+                    // const setAllCallUncomplete:Promise<boolean|Error> = this.setAllCallUncomplete(promptAi);
+                    // if( setAllCallUncomplete instanceof Error ) {
+                    //     this.alertUtility.setError(alertProcess, `setAllCallUncomplete:<br> `, false );
+                    //     this.alertUtility.setError(alertProcess, setAllCallUncomplete );
+                    //     return false;
+                    // } 
+                    // this.alertUtility.setCallResponse(alertProcess, `setAllCallUncomplete: OK`); 
 
                     return text;              
                 }                                                                                                                       
             }
-                                            
-            this.alertUtility.setCallResponse(alertProcess, call); 
+                                                        
     
         return true;
     }
@@ -520,6 +524,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         break;
                     }                
                 }                
+
                 return response;
             } else {
                 if( article !== undefined) {
@@ -704,7 +709,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                     step.messages[0].content        = step.messages[0].content.replace(placeholder, getResponse)+'.';                                        
                                 }
                             }
-                            
+                                                        
                         }                        
                         
                         //Gestisce il replace dinamico dei placeholder contenuti nel message dell'utente 
@@ -713,10 +718,29 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                 let message                         = userMsg.message;                        
                                 for (const itemReplace of oReplace) {     
                                     //Se è settato il campo field ha gia recuperato il dato da uno schema       
-                                    if( itemReplace.schema !== undefined ) {                     
-                                        const placeholder:string        = `[#${itemReplace.field}#]`;
-                                        message                         = message.replace(/\\"/g, '\\"');
-                                        message                         = message.replace(placeholder, title[`${itemReplace.field}`])+'.';
+                                    if( itemReplace.schema !== undefined ) { 
+                                        if( itemReplace.schema === 'ReplacesObject'  ) {
+                                            console.log("########## this.replaces");
+                                            console.log(this.replaces);
+                                            console.log("########## this.replaces");
+
+                                            for (const key in this.replaces) {
+                                                if (this.replaces.hasOwnProperty(key)) {
+                                                    //@ts-ignore
+                                                    let valueReplace = this.replaces[key];
+
+                                                    const placeholder:string    = `[#${itemReplace.field}#]`;
+                                                    message                     = message.replace(/\\"/g, '\\"');
+                                                    message                     = message.replace(placeholder, valueReplace)+'.';
+                                                }
+                                              }
+                                              
+                                            
+                                        } else {
+                                            const placeholder:string        = `[#${itemReplace.field}#]`;
+                                            message                         = message.replace(/\\"/g, '\\"');
+                                            message                         = message.replace(placeholder, title[`${itemReplace.field}`])+'.';
+                                        }
                                     } else if( itemReplace.callFunction !== undefined ) {    
                                         const cmsAdminApi = new CmsAdminApi();
                                         switch(itemReplace.callFunction) {
@@ -881,9 +905,13 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         } else {
                             value2   = response;
                         }
+
                         if( typeof value2 == 'object') {
                             value2 = JSON.stringify(value2);
                         }                
+
+                        value2 = value2.replace(/\n/g, '');
+                        value2 = value2.replace(/\"/g, '"');
                         
                         const filterP = { _id: promptAi._id };
                         const fieldP  = saveTo.field 
@@ -1175,7 +1203,10 @@ export default OpenAiService;
 
 
 
-//TODO: Spostare la call getKeywords getKeywords e getKeywordsAdd fuori dal prompt della generazione perche vanno invotate dal comparatore quando si crea una nuova categoria, quindi dovrà esserci un endPoint dedicato
+
 //TODO: La call getKeywordArticle dovra leggere le keyword di categoria richiedendole tramite chiamata endPoint al comparatore 
 //TODO: La getArticle è stata comabiata usando il readWriteDimanycSchema, quindi fa aggiungo una nuova funzione nel dinamyc per salvare il metaTitle metaDescription e bodyGpt in un unica volta 
 //TODO: Il todo sopra se faccio questo non lo devo fare. Creare nuova call per generare meta title e descript con le keywords
+
+
+//TODO: nella chiamata delle keywords c'è un po di coonfusione sul passaggio dati tra un object json e una stringa, funziona al momento, ma è meglio rendere stabile la cosa. Deve rispondere un oggetto e non una stringa la chiamata node

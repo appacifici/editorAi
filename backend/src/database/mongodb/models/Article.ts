@@ -13,6 +13,7 @@ type ArticleType = {
     img:                string;
     bulletPoints?:      string;
     tecnicalInfo?:      string;
+    keywords?:          string;
     bodyGpt?:           string;
     titleGpt?:          string;
     descriptionGpt?:    string;
@@ -79,10 +80,14 @@ const ArticleSchema   = new Schema({
         type:       String, 
         required:   false,        
     },  
-    titleGpt: { 
+    keywords: { 
         type:       String, 
         required:   false,        
     },  
+    titleGpt: { 
+        type:       String, 
+        required:   false,        
+    },      
     descriptionGpt: { 
         type:       String, 
         required:   false,        

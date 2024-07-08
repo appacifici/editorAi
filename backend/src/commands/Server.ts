@@ -415,33 +415,33 @@ app.get('/api/promptAi/generateAi/:id/:promptId', async (req, res) => {
 	} 
 });
 
-app.get('/api/promptAi/generateGenericAI/:promptId/:spId', async (req, res) => {
+app.get('/api/promptAi/generateAIGetKeywords/:promptId/:spId/:sectionName', async (req, res) => {
 	try {
 		
+		const replace = {sectionName:req.params.sectionName};
+
 		const openAiService: OpenAiService 				= new OpenAiService();		
 		const sitePublication:SitePublicationWithIdType | null 	= await SitePublication.findOne({ _id: req.params.spId }) as SitePublicationWithIdType | null;    
 		if( sitePublication === null ) {
 			return res.status(200).send({'success':false});
-		}  else {			
-			
+		}  else {						
 
-				const processName: string  = `generateGptArticle`;
-				const processLabel: string = `generateGptArticle ${sitePublication.sitePublication} ${sitePublication._id}`;
-				const alertProcess: string = openAiService.alertUtility.initProcess(processLabel); //. date('YmdHis')
-				openAiService.alertUtility.setLimitWrite(60000); 
+			const processName: string  = `generateGptArticle`;
+			const processLabel: string = `generateGptArticle ${sitePublication.sitePublication} ${sitePublication._id}`;
+			const alertProcess: string = openAiService.alertUtility.initProcess(processLabel); //. date('YmdHis')
+			openAiService.alertUtility.setLimitWrite(60000); 
 
-				let response:string|boolean|object = false;
-				for( var x = 0; x < 10; x++ ) {
-					if( typeof response === 'boolean' ) {
-						response = await openAiService.runPromptAiGeneric(alertProcess, processName, sitePublication.sitePublication,req.params.promptId, undefined);
-					}
+			let response:string|boolean|object = false;
+			for( var x = 0; x < 1; x++ ) {
+				if( typeof response === 'boolean' ) {
+					response = await openAiService.runPromptAiGeneric(alertProcess, processName, sitePublication.sitePublication,req.params.promptId, undefined, replace);
 				}
-				
-				await openAiService.alertUtility.write(alertProcess, processName, sitePublication.sitePublication, sitePublication.sitePublication);
-				
-				return res.status(200).send({'success':true, data: response});			
+			}
 			
-			return res.status(200).send({'success':false});  
+			await openAiService.alertUtility.write(alertProcess, processName, sitePublication.sitePublication, sitePublication.sitePublication);
+
+			return res.status(200).send(response);			
+					
 		}		
 		
 	} catch (error) {

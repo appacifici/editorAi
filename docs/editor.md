@@ -148,6 +148,10 @@ Gestisce i message system di ogni calls
         {
           "schema": "Article", //Schema mongoose da leggere
           "field": "title" //Campo da leggere e anche nome del placeholder
+        },
+        {
+          "schema": "ReplacesObject", //I campi da leggerte si trovano nell'oggetto globale della classe
+          "field": "sectionName" //Nome del placeholder
         }
     ],
 

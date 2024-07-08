@@ -205,6 +205,14 @@ const PromptAiComponent: React.FC<PromptAiProps> = ({ promptsAi, total, page, pa
 								</Col>														
 							</Row>														
 							<Row>
+							<Row>
+								<Col>
+									<Form.Group controlId="formData">
+										<Form.Label>data</Form.Label>
+										<Form.Control name="data" as="textarea" placeholder="titolo" defaultValue={promptAiData ? promptAiData.data : ''} />	
+									</Form.Group>
+								</Col>
+							</Row>
 								<Col xs="auto" className="mt-4">
 									<Button variant="primary" type="submit">Salva</Button>
 								</Col>
@@ -298,3 +306,4 @@ const PromptAiComponent: React.FC<PromptAiProps> = ({ promptsAi, total, page, pa
 }
 
 export default PromptAiComponent;
+
