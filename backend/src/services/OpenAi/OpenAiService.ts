@@ -38,6 +38,7 @@ import { IOpenAiService }                                   from './Interface/IO
 import { BaseAlert }                                        from '../Alert/BaseAlert';
 import Site, { SiteWithIdType }                             from '../../database/mongodb/models/Site';
 import CmsAdminApi                                          from '../CmsAdmin/CmsAdminApi';
+import { Console } from 'console';
 
 const result = dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -485,15 +486,15 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     this.alertUtility.setCallResponse(alertProcess, `getResponse`, false);
                     this.alertUtility.setCallResponse(alertProcess, text);
 
-                    // this.alertUtility.setCallData(alertProcess, `setAllCallUncomplete: `,false);                                
-                    // this.alertUtility.setCallData(alertProcess, promptAi);     
-                    // const setAllCallUncomplete:Promise<boolean|Error> = this.setAllCallUncomplete(promptAi);
-                    // if( setAllCallUncomplete instanceof Error ) {
-                    //     this.alertUtility.setError(alertProcess, `setAllCallUncomplete:<br> `, false );
-                    //     this.alertUtility.setError(alertProcess, setAllCallUncomplete );
-                    //     return false;
-                    // } 
-                    // this.alertUtility.setCallResponse(alertProcess, `setAllCallUncomplete: OK`); 
+                    this.alertUtility.setCallData(alertProcess, `setAllCallUncomplete: `,false);                                
+                    this.alertUtility.setCallData(alertProcess, promptAi);     
+                    const setAllCallUncomplete:Promise<boolean|Error> = this.setAllCallUncomplete(promptAi);
+                    if( setAllCallUncomplete instanceof Error ) {
+                        this.alertUtility.setError(alertProcess, `setAllCallUncomplete:<br> `, false );
+                        this.alertUtility.setError(alertProcess, setAllCallUncomplete );
+                        return false;
+                    } 
+                    this.alertUtility.setCallResponse(alertProcess, `setAllCallUncomplete: OK`); 
 
                     return text;              
                 }                                                                                                                       
@@ -527,7 +528,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
 
                 return response;
             } else {
-                if( article !== undefined) {
+                if( article !== undefined && call.readTo !== undefined) {
                     //Questw funzioni sul testo vengono attivate o disattivare dai settings della call 
                     let text:string|undefined  = this.unifyString(article[`${call.readTo}`]);                        
                     if( call.removeHtmlTags === true ) {
@@ -664,20 +665,21 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     }
                 break;
                 case TYPE_READ_WRITE_DYNAMIC_SCHEMA:
+                    //TODO: il call.msgUser.replace NON DEVE ESSERE OBBLIGATORIO - slegare in controlli separati il replade e il replaceSystem
+                    console.log("ECCOMIIIIIIIIIIIIIIII");
+                    console.log(title);
                     
-                    if( call.msgUser.replace !== undefined && typeof title == 'object') {
                         call.msgUser.key
                         // console.log("step");
                         // console.log(step);
                         // console.log("call");
                         // console.log(call);
                         // console.log("promptAi");
-                        const oReplace:[TypeMsgUserRaplace]|undefined                        = call.msgUser.replace;
-                        console.log(call.msgUser.replaceSystem);
+                        const oReplace:[TypeMsgUserRaplace]|undefined                        = call.msgUser.replace;                        
                         const replaceSystem:[TypeMsgSystemRaplace]|undefined                 = call.msgUser.replaceSystem;
                         
                         //Gestisce il replace dinamico dei placeholder contenuti nel message di sistema 
-                        if( replaceSystem !== undefined ) {                                                     
+                        if( replaceSystem !== undefined ) {                                                            
                             
                             let getResponse:string|Error = '';
                             const cmsAdminApi   = new CmsAdminApi();
@@ -695,6 +697,10 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                     case 'getBacklinkSectionsCmsAdmin':                                    
                                         //@ts-ignore
                                         getResponse         = await cmsAdminApi.getBacklinkSectionsCmsAdmin(sitePublication,article);                                    
+                                    break;
+                                    case 'getSectionKeywordsCmsAdmin':                                                                            
+                                        //@ts-ignore
+                                        getResponse         = await cmsAdminApi.getSectionKeywordsCmsAdmin(sitePublication,article);                                    
                                     break;
                                 }
                                 if( getResponse instanceof Error ) {
@@ -737,9 +743,11 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                               
                                             
                                         } else {
-                                            const placeholder:string        = `[#${itemReplace.field}#]`;
-                                            message                         = message.replace(/\\"/g, '\\"');
-                                            message                         = message.replace(placeholder, title[`${itemReplace.field}`])+'.';
+                                            if(  typeof title == 'object') {
+                                                const placeholder:string        = `[#${itemReplace.field}#]`;
+                                                message                         = message.replace(/\\"/g, '\\"');
+                                                message                         = message.replace(placeholder, title[`${itemReplace.field}`])+'.';
+                                            }
                                         }
                                     } else if( itemReplace.callFunction !== undefined ) {    
                                         const cmsAdminApi = new CmsAdminApi();
@@ -754,6 +762,16 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                                 message                         = message.replace(/\\"/g, '\\"');
                                                 message                         = message.replace(placeholder, sections)+'.';
                                             break;
+                                            case 'getSectionKeywordsCmsAdmin':                                                                                                                    
+                                                //@ts-ignore
+                                                const sectionsK:string|Error = await cmsAdminApi.getSectionKeywordsCmsAdmin(sitePublication,article);
+                                                if( sectionsK instanceof Error ) {
+                                                    return sectionsK;
+                                                }
+                                                const placeholderK:string        = `[#${itemReplace.field}#]`;
+                                                message                         = message.replace(/\\"/g, '\\"');
+                                                message                         = message.replace(placeholderK, sectionsK)+'.';
+                                            break;
                                         }
                                     }
                                 }
@@ -765,7 +783,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                                 step.messages.push(chatMessage)
                             }
                         }                    
-                    }
+                    
                 break;
             }        
             return step;
@@ -879,19 +897,56 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         if( article == undefined ) {
                             return new Error('Article undefined - chiamata partitta dal genericAI');
                         }
-                        let value;
-                        if( saveTo.responseField !== undefined ) {
+
+                        let value;                        
+                        let update      = null;
+                        const field     = saveTo.field;
+                        const filter    = { _id: article._id };           
+                        
+                        //L'oggetto jsonField deve avere i nomi dei campi uguale a quelli dello schema mongoose
+                        if( saveTo.jsonField !== undefined ) {                            
+                            update = jsonResponse;                            
+
+                        }else if( saveTo.responseField !== undefined ) {
+                            //se definito responseField va a recuperare il valore da un campo specifico del json ricevuto in risposta da openAi
                             value   = jsonResponse[`${saveTo.responseField}`];
+                            //Se la risposta è un oggetto completo lo converte in una stringa
+                            if( typeof value == 'object') {
+                                value = JSON.stringify(value);
+                            }
+                            //@ts-ignore
+                            update = {[field]: value}
                         } else {
+                            //Recupera tutta la risposta
                             value   = response;
+                            //Se la risposta è un oggetto completo lo converte in una stringa
+                            if( typeof value == 'object') {
+                                value = JSON.stringify(value);
+                            }
+                            //Le quadre servono quando si lavora con una chiave dinamica presa da
+                            //@ts-ignore
+                            update = {[field]: value}
+                        }                        
+                        let responseFunction:boolean|Error = true; 
+                        if( saveTo.callFunction !== undefined ) {
+                            switch( saveTo.callFunction ) {
+                                case "setUseSectionKeywordsCmsAdmin":
+                                    const cmsAdminApi = new CmsAdminApi();
+                                    responseFunction = await cmsAdminApi.setUseSectionKeywordsCmsAdmin(article,promptAi);
+                                break;
+                                case "setUseSectionbacklinksCmsAdmin":
+                                    console.log("saveTo");
+                                    console.log(saveTo);
+                                    const cmsAdminApiKey = new CmsAdminApi();
+                                    responseFunction = await cmsAdminApiKey.setUseSectionBacklinksCmsAdmin(article,promptAi);
+                                break;
+                            }
+
+                            if( responseFunction instanceof Error ) {
+                                return responseFunction;
+                            }
                         }
-                        if( typeof value == 'object') {
-                            value = JSON.stringify(value);
-                        }
-                        const filter = { _id: article._id };
-                        const field  = saveTo.field 
-                        //@ts-ignore
-                        const update = {[field]: value}
+                                                      
                         await Article.findOneAndUpdate(filter, update).then(result => {
                             
                         }).catch(async error => {         
@@ -1036,17 +1091,26 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                     dataField = promptAi.data || '';
                     break;
             }
+                        
+            if( call.emptyCreataDataSave == true ) {
+                console.log("###call");
+                console.log(call);
+                dataField = [{}];
+                field = 'data';
+            }
 
             //Se nel campo specificato nel caso seguente data, è gia presente un json appende a questo oggetto
             //il nuono risultato salvandolo con la chiave specificata in saveKey
-            if( response !== null ) {
+            if( response !== null ) {                
                 if( dataField == '' ) {
                     dataField = [{[call.saveKey]: JSON.parse(response)}];
                 } else {
-                    dataField = dataField.map((item:any) => ({ ...item, [call.saveKey]: JSON.parse(response) }));    
+                    dataField = dataField.map((item:any) => ({ ...item, [call.saveKey]: JSON.parse(response) }));                        
                 }
             }
             
+            console.log("########dataField");
+            console.log(field);
             
             const filter            = { _id: promptAi._id };
             const update            = { [field] : dataField, calls: setCompleteCall };
@@ -1204,9 +1268,6 @@ export default OpenAiService;
 
 
 
-//TODO: La call getKeywordArticle dovra leggere le keyword di categoria richiedendole tramite chiamata endPoint al comparatore 
-//TODO: La getArticle è stata comabiata usando il readWriteDimanycSchema, quindi fa aggiungo una nuova funzione nel dinamyc per salvare il metaTitle metaDescription e bodyGpt in un unica volta 
-//TODO: Il todo sopra se faccio questo non lo devo fare. Creare nuova call per generare meta title e descript con le keywords
-
-
+//Per la scelta ordinata per occurencies farlo da codice e non con gpt. A gpt fare solo scegliere le top key
 //TODO: nella chiamata delle keywords c'è un po di coonfusione sul passaggio dati tra un object json e una stringa, funziona al momento, ma è meglio rendere stabile la cosa. Deve rispondere un oggetto e non una stringa la chiamata node
+//Per lavorare in parallelo con i prmpt, clonare record, aggiungere campo in prompt "parent", se è valorizzato è un clone, nel form vanno bloccati, e al salvataggio del prompt padre salvare le modifice sui figli

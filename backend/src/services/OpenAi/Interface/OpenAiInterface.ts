@@ -41,9 +41,10 @@ interface ChatMessage {
 }
 
 type TypeMsgUserRaplace = {
-    schema?:        string; 
-    field?:         string;
-    callFunction?:  string;
+    schema?:        string;//Schema in cui salvare
+    field?:         string;//Campo in cui salvare
+    callFunction?:  string;//Funziona da chiamare per recuperare dei dati per effettuare poi il replace
+    jsonField?:     object//Formato di risposta che deve corrispondere ai campi dello schema
 }
 
 type TypeMsgSystemRaplace = {
@@ -53,6 +54,7 @@ type TypeMsgSystemRaplace = {
 
 interface TypeSavaToObject extends TypeMsgUserRaplace {
     responseField: string;
+    callFunction?: string
 }
 
 //TODO da definire bene creando delle sotto interfacce per i tipi di msgUser che abbiamo
@@ -64,6 +66,7 @@ interface PromptAICallInterface {
     saveKey:        string; //Il nome della chiave in cui sia il caso di salvataggio di un oggetto
     removeHtmlTags: boolean; //Se deve chiamare la funzione di rimozione dei tags
     lastBodyAppend: boolean;
+    emptyCreataDataSave: boolean;// Determina se svuotare il campo settato nel savaTo
     msgUser:    {
         type:   string, //Specifica il type delle costanti per lo switch di OpenAiService che conosce la logica specifica di lettura dell'oggetto
         user?:   [{

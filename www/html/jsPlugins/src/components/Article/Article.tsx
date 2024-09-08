@@ -149,9 +149,8 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 			const response:any 							= await axios.get(`${BACKEND_ENDPOINT}/api/article/${articleData._id}`);
 			const articleWithIdType:ArticleWithIdType 	= response.data;			
 			if( promptAiResp.data.success === true ) {
-				setCalls(promptAiResp.data.data.calls);							
-				console.log(articleWithIdType);
-				setArticle(articleWithIdType);
+				setCalls(promptAiResp.data.data.calls);											
+				setArticle(articleWithIdType);				
 			}
 			setShowTestBtn(true);
 		} catch (error) {
@@ -288,7 +287,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								<Col>
 									<Form.Group controlId="filterSite">
 										<Form.Label>Site Origine</Form.Label>										
-										<Form.Control name="site" as="select" defaultValue={articleData ? articleData.site._id : ''}>
+										<Form.Control name="site" as="select" value={articleData ? articleData.site._id : ''}>
 											<option value="">{articleData ? articleData.site._id: ''}Seleziona...</option>
 											{siteData && Object.entries(siteData).map(([key, siteWithIdType]) => (
 												<option key={siteWithIdType._id} value={siteWithIdType._id}>{siteWithIdType.site}</option>
@@ -299,7 +298,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								<Col>
 									<Form.Group controlId="filterSitePublication">
 										<Form.Label>Site Destinazione</Form.Label>
-										<Form.Control name="sitePublication" as="select" defaultValue={articleData ? articleData.sitePublication._id : ''}>
+										<Form.Control name="sitePublication" as="select" value={articleData ? articleData.sitePublication._id : ''}>
 											<option value="">...</option>
 											{sitePublicationData && Object.entries(sitePublicationData).map(([key, sitePublicationWithIdType]) => (
 												<option key={sitePublicationWithIdType._id} value={sitePublicationWithIdType._id}>{sitePublicationWithIdType.sitePublication}</option>
@@ -376,7 +375,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 												) : (
 												<p>Editor is loading...</p>
 											)}
-										<Form.Control name="bodyGpt" type="hidden" defaultValue={bodyGpt ? bodyGpt as string : ''} />
+										<Form.Control name="bodyGpt" type="hidden" value={bodyGpt ? bodyGpt as string : ''} />
 									</Form.Group>
 								</Col>	
 							</Row>
@@ -384,19 +383,19 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								<Col>
 									<Form.Group controlId="formTitleAI">
 										<Form.Label>Titolo AI</Form.Label>
-										<Form.Control name="titleGpt" as="textarea" rows={3} placeholder="Titolo AI" defaultValue={articleData ? articleData.titleGpt as string : ''} />
+										<Form.Control name="titleGpt" as="textarea" rows={3} placeholder="Titolo AI" value={articleData ? articleData.titleGpt as string : ''} />
 									</Form.Group>								
 								</Col>	
 								<Col>
 									<Form.Group controlId="formDescriptionAI">
 										<Form.Label>Description AI</Form.Label>
-										<Form.Control name="descriptionGpt" as="textarea" rows={3} placeholder="Description AI" defaultValue={articleData ? articleData.descriptionGpt as string : ''} />
+										<Form.Control name="descriptionGpt" as="textarea" rows={3} placeholder="Description AI" value={articleData ? articleData.descriptionGpt as string : ''} />
 									</Form.Group>
 								</Col>
 								<Col>
 									<Form.Group controlId="formH1AI">
 										<Form.Label>H1 AI</Form.Label>
-										<Form.Control name="h1Gpt" as="textarea" rows={3} placeholder="H1 AI" defaultValue={articleData ? articleData.h1Gpt as string : ''} />
+										<Form.Control name="h1Gpt" as="textarea" rows={3} placeholder="H1 AI" value={articleData ? articleData.h1Gpt as string : ''} />
 									</Form.Group>
 								</Col>		
 							</Row>
@@ -404,13 +403,13 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								<Col>
 									<Form.Group controlId="formBulletPoints">
 										<Form.Label>Bullet Points</Form.Label>
-										<Form.Control name="bulletPoints" as="textarea" placeholder="bulletPoints" defaultValue={articleData ? articleData.bulletPoints as string : ''} />										
+										<Form.Control name="bulletPoints" as="textarea" placeholder="bulletPoints" value={articleData ? articleData.bulletPoints as string : ''} />										
 									</Form.Group>
 								</Col>
 								<Col>
 									<Form.Group controlId="formTecnicalInfo">
 										<Form.Label>Scheda tecnica</Form.Label>
-										<Form.Control name="tecnicalInfo" as="textarea" placeholder="tecnicalInfo" defaultValue={articleData ? articleData.tecnicalInfo as string : ''} />										
+										<Form.Control name="tecnicalInfo" as="textarea" placeholder="tecnicalInfo" value={articleData ? articleData.tecnicalInfo as string : ''} />										
 									</Form.Group>
 								</Col>		
 							</Row>
@@ -418,7 +417,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								<Col>
 									<Form.Group controlId="formKeywords">
 										<Form.Label>Keywords</Form.Label>
-										<Form.Control name="keywords" as="textarea" placeholder="keywords" defaultValue={articleData ? articleData.keywords as string : ''} />										
+										<Form.Control name="keywords" as="textarea" placeholder="keywords" value={articleData ? articleData.keywords as string : ''} />										
 									</Form.Group>
 								</Col>		
 							</Row>
@@ -444,7 +443,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								{/* <Col>
 									<Form.Group controlId="formPublishDate">
 										<Form.Label>Data pubblicazione</Form.Label>
-										<Form.Control name="publishDate" type="text" placeholder="..." defaultValue={articleData ? articleData.publishDate.toString() : ''} />
+										<Form.Control name="publishDate" type="text" placeholder="..." value={articleData ? articleData.publishDate.toString() : ''} />
 									</Form.Group>
 								</Col>		 */}
 							</Row>
@@ -478,7 +477,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 							<Col>
 								<Form.Group controlId="filterSite">
 									<Form.Label>Site Origine</Form.Label>
-									<Form.Control name="site" as="select" defaultValue={articleData ? articleData.site.site : ''}>
+									<Form.Control name="site" as="select" value={articleData ? articleData.site.site : ''}>
 										<option value="">Seleziona...</option>
 										{siteData && Object.entries(siteData).map(([key, siteWithIdType]) => (
 											<option key={siteWithIdType._id} value={siteWithIdType._id}>{siteWithIdType.site}</option>
@@ -489,7 +488,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 							<Col>
 								<Form.Group controlId="filterSitePublication">
 									<Form.Label>Site Destinazione</Form.Label>
-									<Form.Control name="sitePublication" as="select" defaultValue={articleData ? articleData.sitePublication.sitePublication : ''}>
+									<Form.Control name="sitePublication" as="select" value={articleData ? articleData.sitePublication.sitePublication : ''}>
 										<option value="">Seleziona...</option>
 										{sitePublicationData && Object.entries(sitePublicationData).map(([key, sitePublicationWithIdType]) => (
 											<option key={sitePublicationWithIdType._id} value={sitePublicationWithIdType._id}>{sitePublicationWithIdType.sitePublication}</option>
@@ -500,7 +499,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 							<Col>
 								<Form.Group controlId="formUrl">
 									<Form.Label>Url Origine</Form.Label>
-									<Form.Control name="url" type="text" placeholder="Url Origine" defaultValue={query.url as string || ''} />
+									<Form.Control name="url" type="text" placeholder="Url Origine" value={query.url as string || ''} />
 								</Form.Group>
 							</Col>																								
 						</Row>	
@@ -508,19 +507,19 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 							<Col>
 								<Form.Group controlId="formTitle">
 									<Form.Label>Titolo</Form.Label>
-									<Form.Control name="title" type="text" placeholder="Titolo origine" defaultValue={query.title as string || ''} />
+									<Form.Control name="title" type="text" placeholder="Titolo origine" value={query.title as string || ''} />
 								</Form.Group>
 							</Col>	
 							<Col>
 								<Form.Group controlId="formTitleGpt">
 									<Form.Label>Titolo AI</Form.Label>
-									<Form.Control name="titleGpt" type="text" placeholder="Titolo AI" defaultValue={query.titleGpt as string || ''} />
+									<Form.Control name="titleGpt" type="text" placeholder="Titolo AI" value={query.titleGpt as string || ''} />
 								</Form.Group>								
 							</Col>	
 							<Col>
 								<Form.Group controlId="formcategoryPublishSite">
 									<Form.Label>Categoria WP</Form.Label>
-									<Form.Control name="categoryPublishSite" type="text" placeholder="Categoria WP" defaultValue={query.categoryPublishSite as string || ''} />
+									<Form.Control name="categoryPublishSite" type="text" placeholder="Categoria WP" value={query.categoryPublishSite as string || ''} />
 								</Form.Group>
 							</Col>	
 						</Row>
@@ -528,7 +527,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 							<Col>
 								<Form.Group controlId="formuserPublishSite">
 									<Form.Label>Utente WP</Form.Label>
-									<Form.Control name="userPublishSite" type="text" placeholder="Utente WP"  defaultValue={query.userPublishSite as string || ''} />
+									<Form.Control name="userPublishSite" type="text" placeholder="Utente WP"  value={query.userPublishSite as string || ''} />
 								</Form.Group>
 							</Col>	
 							<Col>
@@ -537,7 +536,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 									<Form.Control 
 									type="datetime-local" 
 									name="startDate" 
-									defaultValue={query.startDate ? new Date(query.startDate as string).toISOString().slice(0,16) : ''} />
+									value={query.startDate ? new Date(query.startDate as string).toISOString().slice(0,16) : ''} />
 								</Form.Group>						
 							</Col>									
 							<Col>
@@ -546,7 +545,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 									<Form.Control 
 									type="datetime-local" 
 									name="endDate" 
-									defaultValue={query.endDate ? new Date(query.endDate as string).toISOString().slice(0,16) : ''} />
+									value={query.endDate ? new Date(query.endDate as string).toISOString().slice(0,16) : ''} />
 								</Form.Group>						
 							</Col>									
 						</Row>
@@ -554,7 +553,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 							<Col>
 								<Form.Group controlId="formID">
 									<Form.Label>ID</Form.Label>
-									<Form.Control name="id" type="text" placeholder="ID"  defaultValue={query.id as string || ''} />
+									<Form.Control name="id" type="text" placeholder="ID"  value={query.id as string || ''} />
 								</Form.Group>						
 							</Col>	
 						</Row>

@@ -134,6 +134,17 @@ Gestisce i message system di ogni calls
         "responseField": "bulletList"
       }
     ]
+
+
+    //TODO da fare: Salvataggio chiave risposta openAi (json_response)
+    "saveTo": [
+      {
+        "schema": "Article",
+        "jsonfield": {
+          "metaTitle", "metaDescription", "h1"
+        },          
+      }
+    ]
 ```
 
 #### SISTEMA REPLACE DYNAMIC SCHEMA TYPE

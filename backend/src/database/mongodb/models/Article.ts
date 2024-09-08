@@ -6,6 +6,9 @@ type ArticleType = {
     site:               Schema.Types.ObjectId|SiteWithIdType;
     sitePublication:    Schema.Types.ObjectId|SitePublicationWithIdType;
     url:                string;
+    imgAmz?:            string;
+    asin?:              string;
+    ean?:               string;
     body:               string;
     title:              string;
     description:        string;
@@ -47,6 +50,21 @@ const ArticleSchema   = new Schema({
         type:       String, 
         required:   true, 
         maxlength:  500
+    },  
+    ean: { 
+        type:       String, 
+        required:   false, 
+        maxlength:  50
+    },  
+    asin: { 
+        type:       String, 
+        required:   false, 
+        maxlength:  50
+    },  
+    imgAmz: { 
+        type:       String, 
+        required:   false, 
+        maxlength:  50
     },  
     body: { 
         type:       String, 

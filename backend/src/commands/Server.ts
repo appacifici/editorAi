@@ -11,6 +11,7 @@ import WordpressApi from '../services/WordpressApi';
 import DinamycScraper from '../siteScrapers/api/DinamycScraper';
 import SocketServer from '../services/Socket/SocketServer';
 import { bool } from 'sharp';
+import RestToken from '../services/Security/RestToken';
 
 connectMongoDB();
 
@@ -28,6 +29,20 @@ app.use(express.json());
 //Avvia il socker server che fara da intermediario tra i socketClient installati sui vari cron per comandarne il riavvio
 const socketServer = new SocketServer(3002);
 socketServer.connectClientSocket();
+
+/**
+ * Metodo che viene invocato dal frontend per ricevere i dati di giornata
+ */
+app.get('/api/testToken', async (req, res) => {
+	RestToken.generateToken().then(token => {
+		console.log('Generated token:', token);
+	}).catch(error => {
+		console.error('Error generating token:', error);
+	});
+	res.status(200).send({'success':false});
+});
+
+
 
 /**
  * Metodo che viene invocato dal frontend per ricevere i dati di giornata
@@ -194,7 +209,10 @@ app.get('/api/article/:id', async (req, res) => {
 					userPublishSite: 		article.userPublishSite.toString(),
 					send: 					article.send?.toString(),
 					genarateGpt: 			article.genarateGpt?.toString(),				
-					tecnicalInfo: 			article.tecnicalInfo?.toString()					
+					tecnicalInfo: 			article.tecnicalInfo?.toString(),					
+					titleGpt: 				article.titleGpt?.toString(),					
+					descriptionGpt: 		article.descriptionGpt?.toString(),					
+					h1Gpt: 					article.h1Gpt?.toString(),					
 				};
 				return res.json(modifiedArticle); 
 			}
@@ -385,7 +403,7 @@ app.delete('/api/promptAi/:id', async (req, res) => {
 });
 
 app.get('/api/promptAi/generateAi/:id/:promptId', async (req, res) => {
-	try {
+	try { 
 		
 		const openAiService: OpenAiService 				= new OpenAiService();		
 		const articleGenerate:ArticleWithIdType | null 	= await Article.findOne({ _id: req.params.id }).populate('site').populate('sitePublication')  as ArticleWithIdType | null;    
@@ -432,7 +450,7 @@ app.get('/api/promptAi/generateAIGetKeywords/:promptId/:spId/:sectionName', asyn
 			openAiService.alertUtility.setLimitWrite(60000); 
 
 			let response:string|boolean|object = false;
-			for( var x = 0; x < 1; x++ ) {
+			for( var x = 0; x < 10; x++ ) {
 				if( typeof response === 'boolean' ) {
 					response = await openAiService.runPromptAiGeneric(alertProcess, processName, sitePublication.sitePublication,req.params.promptId, undefined, replace);
 				}
