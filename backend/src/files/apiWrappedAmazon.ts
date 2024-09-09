@@ -88,8 +88,8 @@ const producsJson: ProductsJson = {
   "SearchResult": {
     "Items": [
       {
-        "ASIN": "0545162076",
-        "DetailPageURL": "https://www.amazon.com/dp/0545162076?tag=dgfd&linkCode=osi",
+        "ASIN": "B0CMQ13VFP",
+        "DetailPageURL": "https://amzn.to/4cV5DYF",
         "Images": {
           "Primary": {
             "Large": {
@@ -101,7 +101,7 @@ const producsJson: ProductsJson = {
         },
         "ItemInfo": {
           "Title": {
-            "DisplayValue": "Harry Potter Paperback Box Set (Books 1-7)",
+            "DisplayValue": "DOVAMAN 2400W Motosega Elettrica, con Sistema di Auto-Tension SDS, 40cm Barra e Catena Oregon, 15m/s Velocità della Catena, Olio Automatico, Freno Meccanico, 2 Catene - DCS01A",
             "Label": "Title",
             "Locale": "en_US"
           }

@@ -3,7 +3,7 @@ import { SiteWithIdType }                               from './Site';
 import { SitePublicationWithIdType }                    from './SitePublication';
 
 type ArticleType = {        
-    site:               Schema.Types.ObjectId|SiteWithIdType;
+    site?:               Schema.Types.ObjectId|SiteWithIdType;
     sitePublication:    Schema.Types.ObjectId|SitePublicationWithIdType;
     url:                string;
     imgAmz?:            string;
@@ -39,7 +39,7 @@ const ArticleSchema   = new Schema({
     site: { 
         type: Schema.Types.ObjectId, 
         ref: 'Site',
-        required: true
+        required: false
     },
     sitePublication: {
         type: Schema.Types.ObjectId, 

@@ -20,7 +20,8 @@ program.version('1.0.0').description('CLI team commander')
                 try {                    
                     
                     const amazonProductSearch = new AmazonProductSearch();              
-                    const producsJson:boolean|Error =  await amazonProductSearch.insertNewProduct();
+                    await amazonProductSearch.initialize(); 
+                    const producsJson:boolean|Error =  await amazonProductSearch.insertNewProduct(options.site);
                     
                     process.exit(0);
                 } catch (error) {

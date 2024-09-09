@@ -25,10 +25,14 @@ class BaseApi extends BaseAlert{
     
     constructor() {
         super()
-        connectMongoDB();
+        this.connect();
 
         this.alertProcess   = '';             
         this.processName    = '';    
+    }
+
+    public async connect() {
+        await connectMongoDB();
     }
 
     public setAlertProcessAndName(alertProcess:string, processName:string) {
@@ -57,6 +61,7 @@ class BaseApi extends BaseAlert{
 
     public async getSitePublication(sitePublicationName: string): Promise<SitePublicationWithIdType | Error> {
         try{ 
+            console.log('eccolo finone');
             const result: SitePublicationWithIdType | null = await SitePublication.findOne({ sitePublication: sitePublicationName });
             if( result === null ) {
                 return new Error('SitePublication.find not found');
@@ -431,13 +436,20 @@ class BaseApi extends BaseAlert{
         }        
     }
 
-    private async insertArticle(articleData: ArticleType):Promise<boolean|Error> {
+    public async insertArticle(articleData: ArticleType):Promise<boolean|Error> {
         try {
+
+            
             // Crea una nuova istanza dell'articolo utilizzando i dati forniti
             const newArticle = new Article(articleData);
 
+            await newArticle.validate();
+            console.log('Validazione riuscita');
+            
             // Salva l'articolo nel database
             const savedArticle = await newArticle.save();
+            console.log(savedArticle);
+            
             return true;
 
         }  catch (error: unknown) {                      

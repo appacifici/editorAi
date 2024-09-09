@@ -1263,11 +1263,3 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
 // c.runPromptAiArticle('acquistigiusti.it', 'Come scegliere un cardiofrequenzimetro');
 
 export default OpenAiService;
-
-
-
-
-
-//Per la scelta ordinata per occurencies farlo da codice e non con gpt. A gpt fare solo scegliere le top key
-//TODO: nella chiamata delle keywords c'è un po di coonfusione sul passaggio dati tra un object json e una stringa, funziona al momento, ma è meglio rendere stabile la cosa. Deve rispondere un oggetto e non una stringa la chiamata node
-//Per lavorare in parallelo con i prmpt, clonare record, aggiungere campo in prompt "parent", se è valorizzato è un clone, nel form vanno bloccati, e al salvataggio del prompt padre salvare le modifice sui figli

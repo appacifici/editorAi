@@ -287,8 +287,8 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								<Col>
 									<Form.Group controlId="filterSite">
 										<Form.Label>Site Origine</Form.Label>										
-										<Form.Control name="site" as="select" value={articleData ? articleData.site._id : ''}>
-											<option value="">{articleData ? articleData.site._id: ''}Seleziona...</option>
+										<Form.Control name="site" as="select" value={articleData && articleData.site ? articleData.site?._id : ''}>
+											<option value="">{articleData && articleData.site ? articleData.site._id: ''}Seleziona...</option>
 											{siteData && Object.entries(siteData).map(([key, siteWithIdType]) => (
 												<option key={siteWithIdType._id} value={siteWithIdType._id}>{siteWithIdType.site}</option>
 											))}											
@@ -477,7 +477,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 							<Col>
 								<Form.Group controlId="filterSite">
 									<Form.Label>Site Origine</Form.Label>
-									<Form.Control name="site" as="select" value={articleData ? articleData.site.site : ''}>
+									<Form.Control name="site" as="select" value={articleData && articleData.site ? articleData.site.site : ''}>
 										<option value="">Seleziona...</option>
 										{siteData && Object.entries(siteData).map(([key, siteWithIdType]) => (
 											<option key={siteWithIdType._id} value={siteWithIdType._id}>{siteWithIdType.site}</option>

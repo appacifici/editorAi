@@ -61,11 +61,11 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://79.37.16.106:8050/api/getSections
+        // http://82.55.228.55:8050/api/getSections
 
         try{
             const sections = JSON.parse(article.categoryPublishSite);            
-            const endPoint = `http://79.37.16.106:8050/api/getTecnicalTemplate?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
+            const endPoint = `http://82.55.228.55:8050/api/getTecnicalTemplate?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
             const response = await axios.get(endPoint);
             return JSON.stringify(response.data);
         } catch (error: unknown) {                     
@@ -83,10 +83,10 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://79.37.16.106:8050/api/getSections
+        // http://82.55.228.55:8050/api/getSections
 
         try{            
-            const endPoint = `http://79.37.16.106:8050/api/getSections`;
+            const endPoint = `http://82.55.228.55:8050/api/getSections`;
             const response = await axios.get(endPoint);            
             return JSON.stringify(response.data);
         } catch (error: unknown) {                     
@@ -104,11 +104,11 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://79.37.16.106:8050/api/getSections
+        // http://82.55.228.55:8050/api/getSections
 
         try{            
             const sections = JSON.parse(article.categoryPublishSite);
-            const endPoint = `http://79.37.16.106:8050/api/getBackLinkSections?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
+            const endPoint = `http://82.55.228.55:8050/api/getBackLinkSections?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
             const response = await axios.get(endPoint);            
             return JSON.stringify(response.data);
         } catch (error: unknown) {                     
@@ -126,11 +126,11 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://79.37.16.106:8050/api/getSections
+        // http://82.55.228.55:8050/api/getSections
 
         try{            
             const sections = JSON.parse(article.categoryPublishSite);
-            const endPoint = `http://79.37.16.106:8050/api/getSectionKeywordsCmsAdmin?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
+            const endPoint = `http://82.55.228.55:8050/api/getSectionKeywordsCmsAdmin?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
             
             const response = await axios.get(endPoint);            
             return JSON.stringify(response.data);
@@ -152,7 +152,7 @@ class CmsAdminApi extends BaseAlert{
             console.log("##########promptAi");
             console.log(promptAi);            
             const useBacklinks = promptAi.data;
-            const endPoint = `http://79.37.16.106:8050/api/setUseSectionBacklinksCmsAdmin?useBacklinks=${useBacklinks}`;
+            const endPoint = `http://82.55.228.55:8050/api/setUseSectionBacklinksCmsAdmin?useBacklinks=${useBacklinks}`;
         
             
             const response = await axios.get(endPoint);
@@ -182,7 +182,7 @@ class CmsAdminApi extends BaseAlert{
             console.log(promptAi);
             const sections = JSON.parse(article.categoryPublishSite);
             const useKey = promptAi.data;
-            const endPoint = `http://79.37.16.106:8050/api/setUseSectionKeywordsCmsAdmin?typology=${sections.typology.id}&useKeywords=${useKey}`;
+            const endPoint = `http://82.55.228.55:8050/api/setUseSectionKeywordsCmsAdmin?typology=${sections.typology.id}&useKeywords=${useKey}`;
         
             
             const response = await axios.get(endPoint);
@@ -211,22 +211,58 @@ class CmsAdminApi extends BaseAlert{
             // Accedi a vari campi dell'item
             console.log(`ASIN: ${product.ASIN}`);            
             
-            const endPoint = `http://79.37.16.106:8050/api/insertNewProduct`;                    
-            console.log('http://79.37.16.106:8050/api/insertNewProduct'); 
-            console.log(product); 
-            const response = await axios.post(endPoint, product, {
+            const endPoint = `http://82.55.228.55:8050/api/insertNewProduct`;                    
+            console.log('http://82.55.228.55:8050/api/insertNewProduct'); 
+            
+            const response:any = await axios.post(endPoint, product, {
                 headers: {
                   'Content-Type': 'application/json', // Imposta il tipo di contenuto a JSON
                 },
                 timeout: 10000, // Timeout di 10 secondi
             });
-            console.log("##########FINEsd ");  
+            
 
             console.log("############ response");            
-             console.log(response);
+            console.log(response.data.success);
 
             //return JSON.stringify(response.data);
-            return true;
+            return response.success;
+        } catch (error: unknown) {                     
+            if (isError(error)) {
+                console.log("ERRORWEWWWWWWWW222");
+                console.log(error);
+                return error as Error;
+            } else {
+                console.log("ERRORWEWWWWWWWW");
+                // Gestisci il caso in cui `error` non sia un'istanza di `Error`
+                // Potresti voler creare e restituire un nuovo Error standard qui
+                return new Error('insertNewProduct errore generico');
+            }
+        }
+    }
+
+    public async updateProduct(product:ItemProductAmazon):Promise<boolean|Error> {
+        try{   
+            
+            // Accedi a vari campi dell'item
+            console.log(`ASIN: ${product.ASIN}`);            
+            
+            const endPoint = `http://82.55.228.55:8050/api/updateProduct`;                    
+            console.log('http://82.55.228.55:8050/api/updateProduct'); 
+            console.log(product); 
+            const response:any = await axios.post(endPoint, product, {
+                headers: {
+                  'Content-Type': 'application/json', // Imposta il tipo di contenuto a JSON
+                },
+                timeout: 10000, // Timeout di 10 secondi
+            });
+            
+
+            console.log("############ response");            
+            console.log(response.data.success);
+
+            //return JSON.stringify(response.data);
+            return response.success;
         } catch (error: unknown) {                     
             if (isError(error)) {
                 console.log("ERRORWEWWWWWWWW222");

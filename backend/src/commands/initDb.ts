@@ -25,7 +25,7 @@ const insert = async () => {
             tokenUrl:           '...',
             url:                '...',
             urlImages:          '...',
-            urlCategories:      'http://79.37.16.106:8050/api/getSections',
+            urlCategories:      'http://82.55.228.55:8050/api/getSections',
             categories:         null,
             username:           '',  
             password:           '',  
