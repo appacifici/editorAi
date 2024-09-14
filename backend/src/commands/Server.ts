@@ -30,19 +30,6 @@ app.use(express.json());
 const socketServer = new SocketServer(3002);
 socketServer.connectClientSocket();
 
-/**
- * Metodo che viene invocato dal frontend per ricevere i dati di giornata
- */
-app.get('/api/testToken', async (req, res) => {
-	RestToken.generateToken().then(token => {
-		console.log('Generated token:', token);
-	}).catch(error => {
-		console.error('Error generating token:', error);
-	});
-	res.status(200).send({'success':false});
-});
-
-
 
 /**
  * Metodo che viene invocato dal frontend per ricevere i dati di giornata
@@ -433,7 +420,7 @@ app.get('/api/promptAi/generateAi/:id/:promptId', async (req, res) => {
 	} 
 });
 
-app.get('/api/promptAi/generateAIGetKeywords/:promptId/:spId/:sectionName', async (req, res) => {
+app.get('/api/promptAi/generateAIGet/:promptId/:spId/:sectionName', async (req, res) => {
 	try {
 		
 		const replace = {sectionName:req.params.sectionName};
@@ -450,7 +437,7 @@ app.get('/api/promptAi/generateAIGetKeywords/:promptId/:spId/:sectionName', asyn
 			openAiService.alertUtility.setLimitWrite(60000); 
 
 			let response:string|boolean|object = false;
-			for( var x = 0; x < 10; x++ ) {
+			for( var x = 0; x < 3; x++ ) {
 				if( typeof response === 'boolean' ) {
 					response = await openAiService.runPromptAiGeneric(alertProcess, processName, sitePublication.sitePublication,req.params.promptId, undefined, replace);
 				}
@@ -458,6 +445,8 @@ app.get('/api/promptAi/generateAIGetKeywords/:promptId/:spId/:sectionName', asyn
 			
 			await openAiService.alertUtility.write(alertProcess, processName, sitePublication.sitePublication, sitePublication.sitePublication);
 
+			console.log('response????>');
+			console.log(response);
 			return res.status(200).send(response);			
 					
 		}		

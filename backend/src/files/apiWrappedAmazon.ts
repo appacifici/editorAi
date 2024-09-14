@@ -88,20 +88,20 @@ const producsJson: ProductsJson = {
   "SearchResult": {
     "Items": [
       {
-        "ASIN": "B0CMQ13VFP",
-        "DetailPageURL": "https://amzn.to/4cV5DYF",
+        "ASIN": "B0CD2FSRDD",
+        "DetailPageURL": "https://amzn.to/4gnln9Y",
         "Images": {
           "Primary": {
             "Large": {
               "Height": 134,
-              "URL": "https://m.media-amazon.com/images/I/51BBTJaU6QL._SL160_.jpg",
+              "URL": "https://m.media-amazon.com/images/I/51DOzlkiBTL._AC_SX522_.jpg",
               "Width": 160
             }
           }
         },
         "ItemInfo": {
           "Title": {
-            "DisplayValue": "DOVAMAN 2400W Motosega Elettrica, con Sistema di Auto-Tension SDS, 40cm Barra e Catena Oregon, 15m/s Velocità della Catena, Olio Automatico, Freno Meccanico, 2 Catene - DCS01A",
+            "DisplayValue": "Bose QuietComfort Ultra wireless noise cancelling earbuds, Bluetooth noise cancelling earbuds con audio spaziale e cancellazione del rumore, Nero",
             "Label": "Title",
             "Locale": "en_US"
           }
@@ -117,7 +117,7 @@ const producsJson: ProductsJson = {
               },
               "Id": "l2dKMJRrPVX3O7DAPQ6DWLXBjBeRYsruAnKVf1LNXyjFTUw%2FnNBn41CJV2489iPYMSGuynW8uuwMQ7GhGrcT9F%2F%2FgO5bdp%2B2l0HbPvvHy05ASCdqrOaxWA%3D%3D",
               "Price": {
-                "Amount": 52.16,
+                "Amount": 259,
                 "Currency": "USD",
                 "DisplayAmount": "$52.16",
                 "Savings": {
@@ -132,20 +132,20 @@ const producsJson: ProductsJson = {
         }
       },
       {
-        "ASIN": "B019F6DE4S",
-        "DetailPageURL": "https://www.amazon.it/Kenwood-JMP600WH-Estrattore-PureJuice/dp/B019F6DE4S?psc=1&SubscriptionId=AKIAJQXGXEZE3SBVHWYQ&tag=offerteprezzi87-21&linkCode=xm2&camp=2025&creative=165953&creativeASIN=B019F6DE4S",
+        "ASIN": "B0CDL35Y73",
+        "DetailPageURL": "https://amzn.to/3XSW4FH",
         "Images": {
           "Primary": {
             "Large": {
               "Height": 134,
-              "URL": "https://m.media-amazon.com/images/I/51BBTJaU6QL._SL160_.jpg",
+              "URL": "https://m.media-amazon.com/images/I/619TvTYML3L._AC_SX679_.jpg",
               "Width": 160
             }
           }
         },
         "ItemInfo": {
           "Title": {
-            "DisplayValue": "Estrattore di succo Kenwood JMP600WH PureJuice",
+            "DisplayValue": "Eureka NERE10s Robot Aspirapolvere Lavapavimenti con Stazione, Pulizia Senza Sforzo per 45 Giorni, 4000Pa, Raccolta Automatica della Polvere, Autonomia 180min, Navigazione con LiDAR, WiFi/APP",
             "Label": "Title",
             "Locale": "it_IT"
           }
@@ -161,7 +161,7 @@ const producsJson: ProductsJson = {
               },
               "Id": "l2dKMJRrPVX3O7DAPQ6DWLXBjBeRYsruAnKVf1LNXyjFTUw%2FnNBn41CJV2489iPYMSGuynW8uuwMQ7GhGrcT9F%2F%2FgO5bdp%2B2l0HbPvvHy05ASCdqrOaxWA%3D%3D",
               "Price": {
-                "Amount": 52.16,
+                "Amount": 479,
                 "Currency": "EUR",
                 "DisplayAmount": "$160.80",
                 "Savings": {

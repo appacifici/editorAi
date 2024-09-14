@@ -21,6 +21,7 @@ type ArticleType = {
     titleGpt?:          string;
     descriptionGpt?:    string;
     h1Gpt?:             string;
+    price?:             string;
     send?:              number|string;   
     genarateGpt:        number|string;   
     categoryPublishSite:string;   
@@ -81,6 +82,10 @@ const ArticleSchema   = new Schema({
     h1: { 
         type:       String, 
         required:   true,        
+    },      
+    price: { 
+        type:       String, 
+        required:   false,        
     },      
     img: { 
         type:       String, 

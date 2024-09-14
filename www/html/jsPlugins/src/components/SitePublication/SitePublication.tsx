@@ -126,8 +126,13 @@ const router 												= useRouter();
 									</Form.Group>
 								</Col>							
 							</Row>
-							<Row className={sitePublicationStyle.row2}>
-								
+							<Row className={sitePublicationStyle.row2}>								
+								<Col>
+									<Form.Group controlId="formSiteType">
+										<Form.Label>Tipo</Form.Label>
+										<Form.Control name="siteType" type="text" placeholder="Tipo" defaultValue={sitePublicationData ? sitePublicationData.siteType : ''} />
+									</Form.Group>
+								</Col>
 								<Col>
 									<Form.Group controlId="formUrlImages">
 										<Form.Label>Api WP Image</Form.Label>
@@ -214,6 +219,12 @@ const router 												= useRouter();
 							</Col>							
 							<Col>
 								<Form.Group controlId="formUrl">
+									<Form.Label>Tipo </Form.Label>
+									<Form.Control name="siteType" type="text" placeholder="Tipo di sito" defaultValue={query.siteType as string || ''} />
+								</Form.Group>
+							</Col>
+							<Col>
+								<Form.Group controlId="formUrl">
 									<Form.Label>API WP Post </Form.Label>
 									<Form.Control name="url" type="text" placeholder="End Point api wp posts" defaultValue={query.url as string || ''} />
 								</Form.Group>
@@ -277,6 +288,7 @@ const router 												= useRouter();
 						<thead>
 							<tr>
 								<th data-class="expand">Nome</th>								
+								<th data-class="expand">Tipo</th>								
 								<th data-class="expand">APi WP Token</th>								
 								<th data-class="expand">API WP POST</th>								
 								<th data-class="expand">API WP Image</th>								
@@ -293,6 +305,7 @@ const router 												= useRouter();
 							{sitePublications.map((sitePublication: SitePublicationWithIdType) => (
 								<tr key={sitePublication._id} className="selectable" data-openoverlay="SitePublication" data-id={sitePublication._id}>									
 									<td className="important" data-modify="input" data-field="screen">{sitePublication.sitePublication}</td>
+									<td className="important" data-modify="input" data-field="screen">{sitePublication.siteType}</td>
 									<td className="important" data-modify="input" data-field="screen">{sitePublication.url ? 'SI' : 'Mancante'}</td>
 									<td className="important" data-modify="input" data-field="screen">{sitePublication.tokenUrl ? 'SI' : 'Mancante'}</td>
 									<td className="important" data-modify="input" data-field="screen">{sitePublication.urlImages ? 'SI' : 'Mancante'}</td>									

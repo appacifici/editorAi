@@ -14,6 +14,7 @@ type SitePublicationType = {
     cronGenerateAi:     string;   
     cronSendToWp:       string;   
     promptAiId?:        string;   
+    siteType:           string;   
     [key: string]:      any;
 }
 
@@ -82,6 +83,10 @@ const SitePublicationSchema   = new Schema({
     promptAiId: { 
         type:       String, 
         required:   false        
+    },  
+    siteType: { 
+        type:       String, 
+        required:   true        
     },  
 });
 

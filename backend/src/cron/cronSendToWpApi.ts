@@ -31,7 +31,7 @@ import SocketClient from '../services/Socket/SocketClient';
 
 const runCron = async() => {
 	await connectMongoDB();
-	const sitesPubblication = await SitePublication.find({active:1}).sort({ _id: -1 }).sort({ _id: -1 });
+	const sitesPubblication = await SitePublication.find({active:1,siteType:'wordpress'}).sort({ _id: -1 }).sort({ _id: -1 });
 
 	Object.entries(sitesPubblication).map(async ([key, sitePublication]) => {
 		console.log(sitePublication);

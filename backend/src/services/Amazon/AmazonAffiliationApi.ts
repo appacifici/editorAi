@@ -8,6 +8,7 @@ import CmsAdminApi from '../CmsAdmin/CmsAdminApi';
 import { ArticleType } from '../../database/mongodb/models/Article';
 import { SitePublicationWithIdType } from '../../database/mongodb/models/SitePublication';
 import connectMongoDB from '../../database/mongodb/connect';
+import Site, { SiteWithIdType } from '../../database/mongodb/models/Site';
 
 // Classe per la gestione dell'API di Amazon
 class AmazonProductSearch extends BaseApi {
@@ -43,16 +44,24 @@ class AmazonProductSearch extends BaseApi {
 			// const products = await this.searchProducts('kindle', 3);      
 
 
+			const site:SiteWithIdType|null = await Site.findOne({site:'fake.it'});
+			if( site === null ) {
+				// 	this.alertUtility.setError(this.alertProcess, `getSitePublication`, false );
+				// 	this.alertUtility.setError(this.alertProcess, sitePublication );
+					console.log('empoty site');
+					return false;
+				}
+
 			const sitePublication: SitePublicationWithIdType | Error = await this.getSitePublication(sitePubblicationName);
 			if( sitePublication instanceof Error ) {
 			// 	this.alertUtility.setError(this.alertProcess, `getSitePublication`, false );
 			// 	this.alertUtility.setError(this.alertProcess, sitePublication );
-				console.log(sitePublication);
+				console.log('error sitePublication');
 			 	return false;
 			}
 
 			const productsJson: ProductsJson = producsJson;
-			await this.handleAmazonProductResponse(productsJson,sitePublication);
+			await this.handleAmazonProductResponse(productsJson,sitePublication,site);
 
 			return true;
 		} catch (error) {
@@ -60,7 +69,7 @@ class AmazonProductSearch extends BaseApi {
 		}
 	};
 
-	private handleAmazonProductResponse = async (response: ProductsJson, sitePublication: SitePublicationWithIdType) => {
+	private handleAmazonProductResponse = async (response: ProductsJson, sitePublication: SitePublicationWithIdType, site:SiteWithIdType) => {
 		// Verifica se ci sono Items nella risposta
 		if (response.SearchResult && response.SearchResult.Items) {
 			const items = response.SearchResult.Items;
@@ -80,7 +89,7 @@ class AmazonProductSearch extends BaseApi {
 
 				const articleData: ArticleType = {
 					asin:                   item.ASIN,
-					site:        			sitePublication._id,
+					site:        			site._id,
 					sitePublication:        sitePublication._id,
 					url:                    item.DetailPageURL,
 					body:                   item.ItemInfo.Title.DisplayValue,
@@ -88,6 +97,7 @@ class AmazonProductSearch extends BaseApi {
 					description:            item.ItemInfo.Title.DisplayValue,
 					h1:            			item.ItemInfo.Title.DisplayValue,
 					img:                 	item.Images.Primary.Large.URL,
+					price:                 	String(item.Offers.Listings[0].Price.Amount),
 					genarateGpt:            0,
 					send:                   0,
 					lastMod:                new Date(),

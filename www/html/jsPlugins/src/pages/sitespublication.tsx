@@ -51,6 +51,7 @@ const formatDate = (dateString:string) => {
     const total:number          = await SitePublication.countDocuments(filters);
 
     if (query.sitePublication) filters.sitePublication  = query.sitePublication as string;
+    if (query.siteType) filters.siteType                = query.siteType as string;
     if (query.url) filters.url                          = query.url as string;
     if (query.tokenUrl) filters.tokenUrl                = query.tokenUrl as string;
     if (query.urlImages) filters.urlImages              = query.urlImages as string;

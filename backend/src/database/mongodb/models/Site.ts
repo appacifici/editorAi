@@ -8,7 +8,7 @@ type SiteType = {
     format:             string;
     lastmod?:           Date;   
     active:             number;   
-    categoryPublishSite:Number;   
+    categoryPublishSite:string;   
     userPublishSite:    string;  
     selectorBody:       string;  
     selectorImg:        string;  
@@ -53,7 +53,7 @@ const SiteSchema   = new Schema({
         required:   true,        
     },    
     categoryPublishSite: { 
-        type:       Number, 
+        type:       String, 
         required:   false        
     },    
     userPublishSite: { 

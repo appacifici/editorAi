@@ -18,7 +18,7 @@ program.version('1.0.0').description('CLI team commander')
         switch (options.site) {                        
             case 'acquistigiusti.it':   
                 try {                    
-                    
+                    //TODO: devi scrivere la logia per recuperare le key con cui cercare i prodotti
                     const amazonProductSearch = new AmazonProductSearch();              
                     await amazonProductSearch.initialize(); 
                     const producsJson:boolean|Error =  await amazonProductSearch.insertNewProduct(options.site);

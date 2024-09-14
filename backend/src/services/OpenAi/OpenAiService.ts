@@ -99,7 +99,11 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                         
             return await this.runPromptAiArticle(alertProcess,processName,siteName,promptAiId,0,article);
         } else {
-            return this.runPromptAiArticle(alertProcess,processName,siteName,promptAiId,0,undefined);
+            const data:any =  await this.runPromptAiArticle(alertProcess,processName,siteName,promptAiId,0,undefined);            
+            if( typeof data == 'object') {                
+                return data.data;
+            }
+            return data;
         }                        
     }
 

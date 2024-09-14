@@ -287,7 +287,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								<Col>
 									<Form.Group controlId="filterSite">
 										<Form.Label>Site Origine</Form.Label>										
-										<Form.Control name="site" as="select" value={articleData && articleData.site ? articleData.site?._id : ''}>
+										<Form.Control name="site" as="select" defaultValue={articleData && articleData.site ? articleData.site?._id : ''}>
 											<option value="">{articleData && articleData.site ? articleData.site._id: ''}Seleziona...</option>
 											{siteData && Object.entries(siteData).map(([key, siteWithIdType]) => (
 												<option key={siteWithIdType._id} value={siteWithIdType._id}>{siteWithIdType.site}</option>
@@ -298,7 +298,7 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								<Col>
 									<Form.Group controlId="filterSitePublication">
 										<Form.Label>Site Destinazione</Form.Label>
-										<Form.Control name="sitePublication" as="select" value={articleData ? articleData.sitePublication._id : ''}>
+										<Form.Control name="sitePublication" as="select" defaultValue={articleData ? articleData.sitePublication._id : ''}>
 											<option value="">...</option>
 											{sitePublicationData && Object.entries(sitePublicationData).map(([key, sitePublicationWithIdType]) => (
 												<option key={sitePublicationWithIdType._id} value={sitePublicationWithIdType._id}>{sitePublicationWithIdType.sitePublication}</option>
@@ -343,6 +343,12 @@ const ArticleComponent: React.FC<ArticleProps> = ({ articles, total, page, pageS
 								</Col>
 							</Row>
 							<Row className={articleStyle.row2}>								
+								<Col>
+									<Form.Group controlId="formPrice">
+										<Form.Label>Price</Form.Label>
+										<Form.Control name="price" type="text" placeholder="Price" defaultValue={articleData ? articleData.price as string : ''} />
+									</Form.Group>								
+								</Col>									
 								<Col>
 									<Form.Group controlId="formImg">
 										<Form.Label>Img</Form.Label>
