@@ -62,9 +62,9 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://82.55.228.55:8050/api/getSections
+        // http://82.49.196.69:8050/api/getSections
         const sections = JSON.parse(article.categoryPublishSite);            
-        const endPoint = `http://82.55.228.55:8050/api/getTecnicalTemplate?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
+        const endPoint = `http://82.49.196.69:8050/api/getTecnicalTemplate?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;        
         try{
             
             const response = await axios.get(endPoint);
@@ -84,10 +84,10 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://82.55.228.55:8050/api/getSections
+        // http://82.49.196.69:8050/api/getSections
 
         try{            
-            const endPoint = `http://82.55.228.55:8050/api/getSections`;
+            const endPoint = `http://82.49.196.69:8050/api/getSections`;
             const response = await axios.get(endPoint);            
             return JSON.stringify(response.data);
         } catch (error: unknown) {                     
@@ -105,11 +105,11 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://82.55.228.55:8050/api/getSections
+        // http://82.49.196.69:8050/api/getSections
 
         try{            
             const sections = JSON.parse(article.categoryPublishSite);
-            const endPoint = `http://82.55.228.55:8050/api/getBackLinkSections?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
+            const endPoint = `http://82.49.196.69:8050/api/getBackLinkSections?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
             const response = await axios.get(endPoint);            
             return JSON.stringify(response.data);
         } catch (error: unknown) {                     
@@ -127,13 +127,12 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://82.55.228.55:8050/api/getSections
+        // http://82.49.196.69:8050/api/getSections
 
         try{            
             const sections = JSON.parse(article.categoryPublishSite);
-            const endPoint = `http://82.55.228.55:8050/api/getSectionKeywordsCmsAdmin?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
-            
-            const response = await axios.get(endPoint);            
+            const endPoint = `http://82.49.196.69:8050/api/getSectionKeywordsCmsAdmin?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;            
+            const response = await axios.get(endPoint);                        
             return JSON.stringify(response.data);
             return '';
         } catch (error: unknown) {                     
@@ -153,7 +152,7 @@ class CmsAdminApi extends BaseAlert{
             console.log("##########promptAi");
             console.log(promptAi);            
             const useBacklinks = promptAi.data;
-            const endPoint = `http://82.55.228.55:8050/api/setUseSectionBacklinksCmsAdmin?useBacklinks=${useBacklinks}`;
+            const endPoint = `http://82.49.196.69:8050/api/setUseSectionBacklinksCmsAdmin?useBacklinks=${useBacklinks}`;
         
             
             const response = await axios.get(endPoint);
@@ -183,7 +182,7 @@ class CmsAdminApi extends BaseAlert{
             console.log(promptAi);
             const sections = JSON.parse(article.categoryPublishSite);
             const useKey = promptAi.data;
-            const endPoint = `http://82.55.228.55:8050/api/setUseSectionKeywordsCmsAdmin?typology=${sections.typology.id}&useKeywords=${useKey}`;
+            const endPoint = `http://82.49.196.69:8050/api/setUseSectionKeywordsCmsAdmin?typology=${sections.typology.id}&useKeywords=${useKey}`;
         
             
             const response = await axios.get(endPoint);
@@ -212,8 +211,8 @@ class CmsAdminApi extends BaseAlert{
             // Accedi a vari campi dell'item
             console.log(`ASIN: ${product.ASIN}`);            
             
-            const endPoint = `http://82.55.228.55:8050/api/insertNewProduct`;                    
-            console.log('http://82.55.228.55:8050/api/insertNewProduct'); 
+            const endPoint = `http://82.49.196.69:8050/api/insertNewProduct`;                    
+            console.log('http://82.49.196.69:8050/api/insertNewProduct'); 
             
             const response:any = await axios.post(endPoint, product, {
                 headers: {
@@ -281,10 +280,18 @@ class CmsAdminApi extends BaseAlert{
         this.alertUtility.setCallData(alertProcess, `Article.findOneAndUpdate send: 1`, false);   
         try{         
 
-            console.log('eccccccco');
-            console.log(article);
-            const endPoint = `http://82.55.228.55:8050/api/updateProduct`;                    
-            console.log('http://82.55.228.55:8050/api/updateProduct'); 
+            //@ts-ignore
+            let tecnicalInfo = JSON.parse(article.tecnicalInfo); 
+            
+            //@ts-ignore
+            if( tecnicalInfo.tecnicalGpt !== undefined ) {
+                //@ts-ignore
+                article.tecnicalInfo = JSON.stringify(tecnicalInfo.tecnicalGpt);
+            }
+            console.log(tecnicalInfo.tecnicalGpt); 
+
+            const endPoint = `http://82.49.196.69:8050/api/updateProduct`;                    
+            console.log('http://82.49.196.69:8050/api/updateProduct'); 
             
             const response:any = await axios.post(endPoint, article, {
                 headers: {
@@ -294,10 +301,16 @@ class CmsAdminApi extends BaseAlert{
             });
             
             console.log(response.data);
-            const filtro = { _id: article._id };
-            const aggiornamento = { send: 1 };
-            await Article.findOneAndUpdate(filtro, aggiornamento, { new: true });
-            this.alertUtility.setCallResponse(alertProcess, `Article.findOneAndUpdate OK`);
+
+            if( response.data.success === true ) {
+                const filtro = { _id: article._id };
+                const aggiornamento = { send: 1 };
+                await Article.findOneAndUpdate(filtro, aggiornamento, { new: true });
+                this.alertUtility.setCallResponse(alertProcess, `Article.findOneAndUpdate OK`);
+            } else {
+                this.alertUtility.setError(alertProcess, `updateProduct`, false );
+                this.alertUtility.setError(alertProcess, response.data );
+            }
 
         } catch (error: unknown) {                     
             this.alertUtility.setError(alertProcess, `Article.findOneAndUpdate`, false );
@@ -313,3 +326,45 @@ class CmsAdminApi extends BaseAlert{
 }
 
 export default CmsAdminApi;
+
+// {\n' +
+//     '  "nome_prodotto": "Estrattore di Succo",\n' +
+//     '  "marca": "LINKchef",\n' +
+//     '  "modello": "N/A",\n' +
+//     '  "tipo": "A freddo",\n' +
+//     '  "potenza": {\n' +
+//     '    "wattaggio": "150W",\n' +
+//     '    "voltaggio": "220-240V"\n' +
+//     '  },\n' +
+//     '  "impostazioni_di_velocità": {\n' +
+//     '    "numero_di_velocità": "1",\n' +
+//     '    "rpm": "80"\n' +
+//     '  },\n' +
+//     '  "materiale": {\n' +
+//     '    "materiale_corpo": "Acciaio inossidabile",\n' +
+//     '    "materiale_lama": "Acciaio inossidabile"\n' +
+//     '  },\n' +
+//     '  "capacità": {\n' +
+//     '    "capacità_brocca": "1.0L",\n' +
+//     '    "capacità_contenitore_scarti": "0.8L"\n' +
+//     '  },\n' +
+//     '  "caratteristiche": [\n' +
+//     '    "Sistema anti-goccia",\n' +
+//     '    "Lavabile in lavastoviglie",\n' +
+//     '    "Silenzioso",\n' +
+//     '    "Funzione di inversione"\n' +
+//     '  ],\n' +
+//     '  "dimensioni": {\n' +
+//     '    "altezza": "42 cm",\n' +
+//     '    "larghezza": "20 cm",\n' +
+//     '    "profondità": "30 cm"\n' +
+//     '  },\n' +
+//     '  "peso": "3.5 kg",\n' +
+//     '  "colore": "Argento",\n' +
+//     '  "accessori_inclusi": [\n' +
+//     '    "Spazzola per pulizia",\n' +
+//     '    "Filtro extra",\n' +
+//     '    "Caraffa"\n' +
+//     '  ],\n' +
+//     '  "garanzia": "2 anni"\n' +
+//     '}

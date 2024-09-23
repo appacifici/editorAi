@@ -39,6 +39,7 @@ import { BaseAlert }                                        from '../Alert/BaseA
 import Site, { SiteWithIdType }                             from '../../database/mongodb/models/Site';
 import CmsAdminApi                                          from '../CmsAdmin/CmsAdminApi';
 import { Console } from 'console';
+import { isConstructorDeclaration } from 'typescript';
 
 const result = dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -67,6 +68,7 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
     public async getNextArticleGenerate(siteName: string, generateValue: number): Promise<NextArticleGenerate|null> {
         const sitePublication: SitePublicationWithIdType | null     = await SitePublication.findOne({sitePublication: siteName});
         const article:ArticleWithIdType | null                      = await Article.findOne({ sitePublication: sitePublication?._id, genarateGpt: generateValue }).sort({ lastMod: 1 }) as ArticleWithIdType | null;        
+        //@ts-ignore
         const site:SiteWithIdType | null                            = await Site.findOne({ _id: article?.site.toString()}) as SiteWithIdType | null;
         if( sitePublication ===null || article === null || site === null ) {
             console.log("errore getNextArticleGenerate");
@@ -687,9 +689,10 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
                             
                             let getResponse:string|Error = '';
                             const cmsAdminApi   = new CmsAdminApi();
-
-
+                            
                             for (const itemSystemReplace of replaceSystem) {     
+                                console.log('sucaaaaaaaaa');
+                                console.log(itemSystemReplace.callFunction);
                                 switch( itemSystemReplace.callFunction ) {
                                     case 'getTecnicalTemplateCmsAdmin':           
                                         //TODO: Assicurarsi che in caso article non venga passato sui log se ne abbia evidenta
@@ -713,6 +716,9 @@ class OpenAiService extends BaseAlert implements IOpenAiService{
 
                                 if( step !== null && step.messages !== null && step.messages[0] !== null && step.messages[0].content !== null ) {                                        
                                     const placeholder:string        = `[#${itemSystemReplace.field}#]`;
+                                    console.info('placeholder');
+                                    console.info(placeholder);
+                                    console.info(step.messages[0].content);
                                     // @ts-ignore
                                     step.messages[0].content        = step.messages[0].content.replace(/\\"/g, '\\"');
                                     // @ts-ignore
