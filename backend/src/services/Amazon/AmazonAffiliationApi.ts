@@ -5,7 +5,7 @@ import { promises as fs } from 'fs';
 import producsJson, { ItemProductAmazon, ProductsJson } from '../../files/apiWrappedAmazon';
 import BaseApi from '../../siteScrapers/api/BaseApi';
 import CmsAdminApi from '../CmsAdmin/CmsAdminApi';
-import { ArticleType } from '../../database/mongodb/models/Article';
+import Article, { ArticleType, ArticleWithIdType } from '../../database/mongodb/models/Article';
 import { SitePublicationWithIdType } from '../../database/mongodb/models/SitePublication';
 import connectMongoDB from '../../database/mongodb/connect';
 import Site, { SiteWithIdType } from '../../database/mongodb/models/Site';
@@ -41,9 +41,6 @@ class AmazonProductSearch extends BaseApi {
 
 	public insertNewProduct = async (sitePubblicationName:string): Promise<boolean | Error> => {
 		try {
-			// const products = await this.searchProducts('kindle', 3);      
-
-
 			const site:SiteWithIdType|null = await Site.findOne({site:'fake.it'});
 			if( site === null ) {
 				// 	this.alertUtility.setError(this.alertProcess, `getSitePublication`, false );
@@ -59,6 +56,10 @@ class AmazonProductSearch extends BaseApi {
 				console.log('error sitePublication');
 			 	return false;
 			}
+
+
+			// const products = await this.searchProducts('kindle', 3);
+			
 
 			const productsJson: ProductsJson = producsJson;
 			await this.handleAmazonProductResponse(productsJson,sitePublication,site);
@@ -77,6 +78,12 @@ class AmazonProductSearch extends BaseApi {
 
 			// Ciclo su tutti gli item
 			await Promise.all(items.map(async (item:ItemProductAmazon) => {
+				const existingProduct = await this.getProductByAsin(item.ASIN);
+				if (existingProduct) {
+					console.log(`Prodotto con ASIN ${item.ASIN} già presente nel database. Skipping insert.`);
+					return; // Se il prodotto esiste già, salta l'inserimento
+				}
+				
 				let respInsert:boolean|Error =  await cmsAdmin.insertNewProduct(item);
 				if( respInsert instanceof Error ) {
 					console.log(respInsert);
@@ -122,6 +129,15 @@ class AmazonProductSearch extends BaseApi {
 		}
 	};
 
+	public async getProductByAsin(asin: string): Promise<ArticleWithIdType | null> {
+        try {
+            const article:ArticleWithIdType|null = await  Article.findOne({ asin:asin });
+            return article || null;
+        } catch (error) {
+            console.error("Errore durante la ricerca del prodotto:", error);
+            throw new Error("Errore durante la ricerca del prodotto per ASIN.");
+        }
+    }
 
 	// Funzione per costruire il corpo della richiesta
 	private buildRequestBody(keywords: string, itemCount: number): Record<string, any> {
@@ -163,7 +179,17 @@ class AmazonProductSearch extends BaseApi {
 	}
 
 	// Funzione per cercare prodotti su Amazon
-	public async searchProducts(keywords: string, itemCount: number): Promise<AmazonProductResponse | void> {
+	public async searchProducts(keywords: string, itemCount: number): Promise<AmazonProductResponse | void | boolean> {
+
+		console.log('succhiami la mappoona');
+		const cmsAdminApi = new CmsAdminApi();
+		const randomKey = await cmsAdminApi.getJsonInitAllProductsCmsAdminAction();
+		console.log('randomKey');
+		console.log(randomKey);
+		return false;
+
+
+
 		const body = this.buildRequestBody(keywords, itemCount);
 		const requestOptions = this.buildRequestOptions(body);
 

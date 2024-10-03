@@ -27,25 +27,10 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/article": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/article.js"
-    ],
-    "/promptAi": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/promptAi.js"
-    ],
     "/sites": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/sites.js"
-    ],
-    "/sitespublication": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/sitespublication.js"
     ]
   },
   "ampFirstPages": []
