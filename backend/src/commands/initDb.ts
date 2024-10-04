@@ -25,7 +25,7 @@ const insert = async () => {
             tokenUrl:           '...',
             url:                '...',
             urlImages:          '...',
-            urlCategories:      'http://95.234.220.177:8050/api/getSections',
+            urlCategories:      'http://acquistigiusti.it/api/getSections',
             categories:         null,
             username:           '',  
             password:           '',  

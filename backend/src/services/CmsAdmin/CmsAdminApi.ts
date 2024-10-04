@@ -62,9 +62,9 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://95.234.220.177:8050/api/getSections
+        // http://acquistigiusti.it/api/getSections
         const sections = JSON.parse(article.categoryPublishSite);            
-        const endPoint = `http://95.234.220.177:8050/api/getTecnicalTemplate?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;        
+        const endPoint = `http://acquistigiusti.it/api/getTecnicalTemplate?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;        
         try{
             
             const response = await axios.get(endPoint);
@@ -84,10 +84,10 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://95.234.220.177:8050/api/getSections
+        // http://acquistigiusti.it/api/getSections
 
         try{            
-            const endPoint = `http://95.234.220.177:8050/api/getSections`;
+            const endPoint = `http://acquistigiusti.it/api/getSections`;
             const response = await axios.get(endPoint);            
             return JSON.stringify(response.data);
         } catch (error: unknown) {                     
@@ -105,11 +105,11 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://95.234.220.177:8050/api/getSections
+        // http://acquistigiusti.it/api/getSections
 
         try{            
             const sections = JSON.parse(article.categoryPublishSite);
-            const endPoint = `http://95.234.220.177:8050/api/getBackLinkSections?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
+            const endPoint = `http://acquistigiusti.it/api/getBackLinkSections?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;
             const response = await axios.get(endPoint);            
             return JSON.stringify(response.data);
         } catch (error: unknown) {                     
@@ -127,11 +127,11 @@ class CmsAdminApi extends BaseAlert{
         
         // console.log(sitePublication);
         //TODO: modificare sitePub lication e inserire campi per gestire questa url dinamicamente
-        // http://95.234.220.177:8050/api/getSections
+        // http://acquistigiusti.it/api/getSections
 
         try{            
             const sections = JSON.parse(article.categoryPublishSite);
-            const endPoint = `http://95.234.220.177:8050/api/getSectionKeywordsCmsAdmin?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;            
+            const endPoint = `http://acquistigiusti.it/api/getSectionKeywordsCmsAdmin?category=${sections.category.id}&subcategory=${sections.subcategory.id}&typology=${sections.typology.id}`;            
             const response = await axios.get(endPoint);                        
             return JSON.stringify(response.data);
             return '';
@@ -152,7 +152,7 @@ class CmsAdminApi extends BaseAlert{
             console.log("##########promptAi");
             console.log(promptAi);            
             const useBacklinks = promptAi.data;
-            const endPoint = `http://95.234.220.177:8050/api/setUseSectionBacklinksCmsAdmin?useBacklinks=${useBacklinks}`;
+            const endPoint = `http://acquistigiusti.it/api/setUseSectionBacklinksCmsAdmin?useBacklinks=${useBacklinks}`;
         
             
             const response = await axios.get(endPoint);
@@ -178,7 +178,7 @@ class CmsAdminApi extends BaseAlert{
     public async getJsonInitAllProductsCmsAdminAction():Promise<string|Error> {
         try{   
             
-            const endPoint = `http://95.234.220.177:8050/api/getJsonInitAllProductsCmsAdminAction`;
+            const endPoint = `http://acquistigiusti.it/api/getJsonInitAllProductsCmsAdminAction`;
             console.log(endPoint);
             
             const response = await axios.get(endPoint);
@@ -212,7 +212,7 @@ class CmsAdminApi extends BaseAlert{
             console.log(promptAi);
             const sections = JSON.parse(article.categoryPublishSite);
             const useKey = promptAi.data;
-            const endPoint = `http://95.234.220.177:8050/api/setUseSectionKeywordsCmsAdmin?typology=${sections.typology.id}&useKeywords=${useKey}`;
+            const endPoint = `http://acquistigiusti.it/api/setUseSectionKeywordsCmsAdmin?typology=${sections.typology.id}&useKeywords=${useKey}`;
         
             
             const response = await axios.get(endPoint);
@@ -241,8 +241,8 @@ class CmsAdminApi extends BaseAlert{
             // Accedi a vari campi dell'item
             console.log(`ASIN: ${product.ASIN}`);            
             
-            const endPoint = `http://95.234.220.177:8050/api/insertNewProduct`;                    
-            console.log('http://95.234.220.177:8050/api/insertNewProduct'); 
+            const endPoint = `http://acquistigiusti.it/api/insertNewProduct`;                    
+            console.log('http://acquistigiusti.it/api/insertNewProduct'); 
             
             const response:any = await axios.post(endPoint, product, {
                 headers: {
@@ -322,8 +322,8 @@ class CmsAdminApi extends BaseAlert{
             }
             console.log(tecnicalInfo.tecnicalGpt); 
 
-            const endPoint = `http://95.234.220.177:8050/api/updateProduct`;                    
-            console.log('http://95.234.220.177:8050/api/updateProduct'); 
+            const endPoint = `http://acquistigiusti.it/api/updateProduct`;                    
+            console.log('http://acquistigiusti.it/api/updateProduct'); 
             
             const response:any = await axios.post(endPoint, article, {
                 headers: {
